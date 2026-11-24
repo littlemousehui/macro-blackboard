@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>國際連結</title>
+<style>
+:root{
+  --board:#24402f; --card:#24402f; --ink:#f4f1e6; --muted:#b8c6b6; --line:rgba(244,241,230,.32);
+  --accent:#ff9f8c; --accent-soft:rgba(255,226,120,.14); --blue:#8fd3f5; --green:#c3ec8e; --gray:#d0d0c8;
+  --yellow:#ffe27a; --pink:#ffb3c7; --wood1:#a8743f; --wood2:#6e4826; --frame:14px;
+  --note:#f7e27a; --note-ink:#3a2f05; --axis:#e9e6da;
+  --chalk-font:"Segoe UI","Microsoft JhengHei","微軟正黑體","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:#3b2a1a; color:var(--ink); font-family:var(--chalk-font);
+  line-height:1.65; overflow:hidden;
+  text-shadow:0 0 1px rgba(255,255,255,.45),0 0 8px rgba(255,255,255,.08);
+}
+/* wooden frame + board surface */
+#board{
+  position:fixed; inset:0; border:var(--frame) solid var(--wood2);
+  border-image:linear-gradient(135deg,var(--wood1),var(--wood2) 40%,var(--wood1) 70%,var(--wood2)) 1;
+  background-color:var(--board);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse 60% 40% at 25% 20%,rgba(255,255,255,.07),transparent 70%),
+    radial-gradient(ellipse 50% 30% at 75% 70%,rgba(255,255,255,.05),transparent 70%),
+    radial-gradient(ellipse 30% 18% at 60% 30%,rgba(255,255,255,.04),transparent 70%),
+    radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.35));
+  box-shadow:inset 0 0 40px rgba(0,0,0,.45);
+  z-index:0;
+}
+#progress{position:fixed;top:var(--frame);left:var(--frame);height:3px;background:var(--yellow);opacity:.8;transition:width .25s;z-index:5;filter:url(#chalk)}
+.slide{position:absolute;inset:var(--frame);bottom:calc(var(--frame) + 58px);display:none;overflow-y:auto;padding:36px 18px 28px;z-index:1}
+.slide.active{display:block;animation:write .45s ease}
+@keyframes write{from{opacity:0;filter:blur(2px)}to{opacity:1;filter:none}}
+.wrap{max-width:1360px;margin:0 auto}
+@media (min-width:1500px){p,li{font-size:23px}.formula{font-size:38px}}
+h1{font-size:clamp(36px,6vw,68px);line-height:1.2;margin:0 0 .3em;letter-spacing:.06em;filter:url(#chalk-soft)}
+h2{display:inline-block;font-size:clamp(26px,3.6vw,40px);line-height:1.3;margin:0 0 .7em;padding:0 .2em .15em;
+   border-bottom:3px solid var(--yellow);filter:url(#chalk-soft)}
+h3{font-size:clamp(19px,2.3vw,25px);margin:.2em 0 .4em;color:var(--yellow)}
+p,li{font-size:clamp(17px,2vw,22px)}
+ul,ol{padding-left:1.3em;margin:.3em 0}
+li{margin:.3em 0}
+li::marker{color:var(--yellow)}
+.kicker{color:var(--pink);font-weight:700;letter-spacing:.12em;font-size:clamp(15px,1.7vw,19px)}
+.muted{color:var(--muted)}
+.small{font-size:clamp(14px,1.5vw,16px)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.cols.wide-left{grid-template-columns:1.2fr 1fr}
+@media (max-width:760px){.cols,.cols.wide-left{grid-template-columns:1fr}}
+.card{background:rgba(255,255,255,.035);border:2px dashed rgba(244,241,230,.42);border-radius:14px 22px 12px 20px;padding:14px 20px}
+.big-q{font-size:clamp(24px,3.2vw,36px);font-weight:700;line-height:1.45}
+.hl{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.55);padding:0 .1em}
+/* sticky note pinned to the board */
+.note{position:relative;background:var(--note);color:var(--note-ink);text-shadow:none;border-radius:2px;
+  padding:14px 18px 12px;margin:20px 6px 4px;font-size:clamp(16px,1.8vw,20px);
+  box-shadow:3px 6px 14px rgba(0,0,0,.45);transform:rotate(-.8deg);
+  background-image:linear-gradient(transparent 0 85%,rgba(0,0,0,.05))}
+.note:nth-of-type(even){transform:rotate(.7deg)}
+.note::before{content:"📝 我的課堂筆記　";font-weight:700;color:#8a4b00}
+.note::after{content:"";position:absolute;top:-9px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#ff8a8a,#c0282d);box-shadow:1px 2px 3px rgba(0,0,0,.5)}
+.note i{color:inherit}
+.warn{border-left:4px solid var(--pink);background:rgba(255,179,199,.08);padding:10px 16px;border-radius:0 12px 12px 0;margin-top:14px}
+.formula{font-family:"Cambria Math","Times New Roman",serif;font-size:clamp(24px,3.2vw,36px);text-align:center;margin:.5em 0;white-space:nowrap;overflow-x:auto;color:#fffdf2;filter:url(#chalk-soft)}
+.formula i,.m i{font-style:italic}
+.m{font-family:"Cambria Math","Times New Roman",serif}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em;font-size:.9em}
+.frac>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .15em}
+.frac>span:last-child{padding:0 .15em}
+table{border-collapse:collapse;width:100%;font-size:clamp(15px,1.8vw,20px)}
+th,td{border:1.5px solid var(--line);padding:7px 10px;text-align:center}
+th{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.6)}
+.up{color:var(--green);font-weight:700}.down{color:var(--accent);font-weight:700}
+.chart{width:100%;height:auto;display:block;background:rgba(0,0,0,.08);border:2px dashed rgba(244,241,230,.25);border-radius:16px 10px 18px 12px}
+.chart .axis{stroke:var(--axis);stroke-width:2;filter:url(#chalk)}
+.chart .curve{fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;filter:url(#chalk)}
+.chart .dash{stroke-dasharray:8 7}
+.chart .guide{stroke:var(--gray);stroke-width:1.2;stroke-dasharray:4 5;opacity:.75}
+.chart .step{stroke:var(--yellow);stroke-width:2.4;fill:none;filter:url(#chalk)}
+.chart text{fill:var(--ink);font-size:15px;font-family:var(--chalk-font)}
+.chart text.lbl{font-weight:700}
+.chart text.tick{fill:var(--muted);font-size:13px}
+.chart .pt{stroke:var(--board);stroke-width:2}
+.bars .row{display:flex;align-items:center;gap:10px;margin:12px 0}
+.bars .name{width:7.5em;flex:none;font-size:clamp(15px,1.7vw,18px)}
+.bars .track{flex:1;display:flex;height:36px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.07);border:1.5px dashed var(--line)}
+.bars .seg{display:flex;align-items:center;justify-content:center;color:#17261c;font-weight:700;text-shadow:none;font-size:14px;white-space:nowrap;opacity:.92}
+.bars .total{width:4.2em;flex:none;font-weight:700;text-align:right;color:var(--yellow)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:15px;margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.flow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0}
+.flow .box{background:rgba(255,255,255,.035);border:2px solid var(--line);border-radius:16px 10px 18px 12px;padding:10px 14px;text-align:center;font-size:clamp(16px,1.9vw,20px)}
+.flow .box.in{border-color:var(--green)}.flow .box.out{border-color:var(--accent)}.flow .box.core{border-color:var(--blue);font-weight:700}
+.flow .arrow{font-size:28px;color:var(--yellow)}
+.icons{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:760px){.icons{grid-template-columns:repeat(2,1fr)}}
+.icon{border:2px dashed var(--line);border-radius:18px 12px 20px 10px;padding:12px;text-align:center}
+.icon .e{font-size:36px;text-shadow:none}
+.icon .s{font-family:"Cambria Math","Times New Roman",serif;font-size:30px;font-style:italic;font-weight:700;color:var(--yellow)}
+.title-slide{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 170px)}
+.corner{position:absolute;top:22px;right:28px;text-align:right;color:var(--muted);font-size:clamp(14px,1.6vw,18px);line-height:1.5;z-index:2}
+.corner b{color:var(--ink)}
+@media (max-width:700px){.corner{position:static;text-align:left;margin:0 auto 8px;max-width:1080px}}
+/* cover: two columns filling the whole board */
+.cover-grid{max-width:1500px;margin:0 auto;min-height:calc(100vh - 2*var(--frame) - 58px - 64px);
+  display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(24px,4vw,64px);align-items:center;padding:0 clamp(0px,2vw,32px)}
+.cover-left h1{font-size:clamp(44px,7vw,96px);margin:.1em 0 .25em}
+.cover-left .big-q{font-size:clamp(22px,2.8vw,38px)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:1.4em 0 1em}
+.chip{border:2px dashed var(--line);border-radius:999px;padding:6px 14px;font-size:clamp(14px,1.5vw,17px);color:var(--muted)}
+.chip b{color:var(--ink)}
+.hint{margin-top:1.6em}
+.cover-right{display:flex;flex-direction:column;gap:18px}
+.doodle{width:100%;border:2px dashed rgba(244,241,230,.25);border-radius:18px 12px 20px 10px;padding:12px;background:rgba(0,0,0,.08)}
+.agenda{border:2px solid rgba(255,226,122,.55);border-radius:14px 22px 12px 20px;padding:14px 20px;background:rgba(255,226,122,.05)}
+.agenda-title{color:var(--yellow);font-weight:700;font-size:clamp(17px,1.9vw,22px);margin-bottom:6px}
+.agenda ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.agenda li{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:clamp(15px,1.6vw,18px)}
+.agenda li small{display:block;color:var(--muted);font-size:.85em}
+.agenda .num{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--yellow);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:700;filter:url(#chalk-soft)}
+@media (max-width:860px){.cover-grid{grid-template-columns:1fr;min-height:0}.agenda ol{grid-template-columns:1fr}}
+.doodle path,.doodle line{fill:none;stroke-linecap:round;filter:url(#chalk)}
+/* chalk tray with nav */
+nav{position:fixed;left:var(--frame);right:var(--frame);bottom:var(--frame);height:58px;display:flex;align-items:center;justify-content:center;gap:14px;padding:0 16px;
+  background:linear-gradient(#8a5c30,#6a4322 60%,#553519);border-top:3px solid #b9864f;box-shadow:0 -4px 10px rgba(0,0,0,.35);z-index:4;text-shadow:none}
+nav .home{position:absolute;left:150px;bottom:12px;color:#f7ead2;text-decoration:none;font-weight:700;font-size:15px;padding:5px 12px;border:1.5px solid rgba(247,234,210,.5);border-radius:6px}
+nav .home:hover{background:rgba(255,255,255,.12)}
+@media (max-width:600px){nav .home{position:static;padding:5px 8px}}
+nav button{background:#f2efe6;color:#3a2a1a;border:none;border-radius:6px;padding:7px 16px;font-size:16px;cursor:pointer;font-family:var(--chalk-font);font-weight:700;
+  box-shadow:0 3px 0 #9d9584,0 4px 6px rgba(0,0,0,.35)}
+nav button:hover{background:#fff8d6}
+nav button:active{transform:translateY(2px);box-shadow:0 1px 0 #9d9584}
+#counter{min-width:5em;text-align:center;color:#f7ead2;font-variant-numeric:tabular-nums;font-weight:700}
+.sticks{position:absolute;left:22px;bottom:12px;display:flex;gap:8px;align-items:flex-end}
+.sticks i{display:block;width:46px;height:11px;border-radius:5px;box-shadow:0 2px 2px rgba(0,0,0,.35)}
+.sticks i:nth-child(1){background:#f6f4ec;transform:rotate(-4deg)}
+.sticks i:nth-child(2){background:#ffe27a;width:34px;transform:rotate(3deg)}
+.sticks i:nth-child(3){background:#ffb3c7;width:28px}
+.eraser{position:absolute;right:26px;bottom:10px;width:78px;height:24px;border-radius:4px;overflow:hidden;box-shadow:0 3px 4px rgba(0,0,0,.4);
+  background:linear-gradient(#3d5a80 0 55%,#d6d3c8 55%)}
+@media (max-width:600px){.sticks,.eraser{display:none}}
+@media print{
+  body{overflow:visible;background:var(--board)}
+  nav,#progress{display:none}
+  #board{position:fixed}
+  .slide{position:relative;inset:auto;display:block !important;page-break-after:always;min-height:100vh;animation:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- userSpaceOnUse region: straight axis lines have a zero-height bbox and would vanish otherwise -->
+  <filter id="chalk" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="chalk-soft" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+</svg>
+<div id="board"></div>
+<div id="progress"></div>
+
+<!-- 1 -->
+<section class="slide cover"><div class="cover-grid">
+  <div class="cover-left">
+    <div class="kicker">總體經濟學・第 13 章</div>
+    <h1>國際連結</h1>
+    <p class="big-q" style="font-weight:400">美國一升息，<br>為什麼全世界都緊張？</p>
+    <div class="chips">
+      <span class="chip">📅 今日主題：<b>開放經濟</b></span>
+      <span class="chip">🧹 值日生：<b>你</b></span>
+      <span class="chip">⏱️ 24 頁・約 22 分鐘</span>
+      <span class="chip">📚 建議先看：<b>第 14 章</b></span>
+    </div>
+    <p class="muted small hint">← → 方向鍵或下方按鈕換頁　｜　內容整理自本知識庫 wiki：第13章 國際連結</p>
+  </div>
+  <div class="cover-right">
+    <svg class="doodle" viewBox="0 0 520 200" aria-hidden="true">
+      <circle cx="95" cy="100" r="58" stroke="#8fd3f5" stroke-width="3.5" fill="none"/>
+      <circle cx="425" cy="100" r="58" stroke="#ffe27a" stroke-width="3.5" fill="none"/>
+      <path d="M150 80 C 230 30, 290 30, 368 80" stroke="#c3ec8e" stroke-width="3.5" fill="none"/>
+      <path d="M362 72 L370 82 L357 85" stroke="#c3ec8e" stroke-width="3.5" fill="none"/>
+      <path d="M368 122 C 290 172, 230 172, 152 122" stroke="#ff9f8c" stroke-width="3.5" fill="none" stroke-dasharray="9 7"/>
+      <path d="M158 116 L150 126 L163 129" stroke="#ff9f8c" stroke-width="3.5" fill="none"/>
+      <text x="95" y="106" text-anchor="middle" fill="#8fd3f5" font-size="20" font-family="Microsoft JhengHei,sans-serif">🇺🇸 美國</text>
+      <text x="425" y="106" text-anchor="middle" fill="#ffe27a" font-size="20" font-family="Microsoft JhengHei,sans-serif">🌏 新興市場</text>
+      <text x="260" y="34" text-anchor="middle" fill="#c3ec8e" font-size="16" font-family="Microsoft JhengHei,sans-serif">貿易 📦</text>
+      <text x="260" y="186" text-anchor="middle" fill="#ff9f8c" font-size="16" font-family="Microsoft JhengHei,sans-serif">資金 💵</text>
+    </svg>
+    <div class="agenda">
+      <div class="agenda-title">今天的課程</div>
+      <ol>
+        <li><span class="num">1</span><span><b>國際收支</b><small>國家的記帳本</small></span></li>
+        <li><span class="num">2</span><span><b>匯率</b><small>固定・浮動・PPP</small></span></li>
+        <li><span class="num">3</span><span><b>IS-LM 工具箱</b><small>淨出口・資本移動</small></span></li>
+        <li><span class="num">4</span><span><b>Mundell-Fleming</b><small>政策還有效嗎？</small></span></li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<!-- 2 -->
+<section class="slide"><div class="wrap">
+  <h2>2022 年新興市場的三大風險</h2>
+  <div class="cols">
+    <div>
+      <div class="card"><h3>🦠 Omicron</h3><p>引發金融市場拋售，可能拖慢全球復甦。</p></div>
+      <div class="card" style="margin-top:12px"><h3>🇺🇸 美國貨幣緊縮</h3><p>聯準會加速縮減購債 → 流向新興市場的資金退潮 → 美元走強、壓抑貿易。</p></div>
+      <div class="card" style="margin-top:12px"><h3>🇨🇳 中國成長放緩</h3><p>中國是鋁、煤、棉花、黃豆的最大買家，全世界都會痛。</p></div>
+    </div>
+    <div>
+      <h3>脆弱度分數（愈高愈脆弱）</h3>
+      <table>
+        <tr><th>最脆弱</th><th>分數</th><th>最穩健</th><th>分數</th></tr>
+        <tr><td>阿根廷</td><td class="down">33</td><td>越南</td><td class="up">10</td></tr>
+        <tr><td>斯里蘭卡</td><td class="down">31</td><td>俄羅斯</td><td class="up">8</td></tr>
+        <tr><td>埃及</td><td class="down">28</td><td>沙烏地阿拉伯</td><td class="up">6</td></tr>
+        <tr><td>巴基斯坦</td><td>27</td><td colspan="2" rowspan="3" style="text-align:left">阿根廷通膨 &gt; 50%；<br>土耳其里拉 2021 年<br>對美元貶值 45%</td></tr>
+        <tr><td>巴西</td><td>24</td></tr>
+        <tr><td>土耳其</td><td>23</td></tr>
+      </table>
+      <p class="small muted">40 個新興經濟體、五項指標排名平均（The Economist, 2021-12-04）</p>
+    </div>
+  </div>
+  <div class="note">資金回流美國；強勢美元壓抑貿易。</div>
+</div></section>
+
+<!-- 3 -->
+<section class="slide"><div class="wrap">
+  <h2>國家靠兩條管道連在一起</h2>
+  <p>各國經濟愈來愈相互依存：美國衰退會拖累別國，美國擴張會帶動別國。</p>
+  <div class="cols">
+    <div class="card">
+      <h3>📦 管道一：貿易</h3>
+      <ul>
+        <li>出口 → 外國人買本國貨，<span class="up">增加本國需求</span></li>
+        <li>進口 → 本國人的錢花到國外，是所得循環的<span class="down">漏出</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>💵 管道二：金融</h3>
+      <ul>
+        <li>基金經理人在全世界找<b>最高報酬</b></li>
+        <li>資金搬來搬去 → 影響所得、匯率，以及貨幣政策能不能影響利率</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<!-- 4 -->
+<section class="slide"><div class="wrap">
+  <h2>國家的記帳本：國際收支</h2>
+  <div class="cols">
+    <div>
+      <p><b>國際收支</b>：本國居民和世界其他國家交易的紀錄。</p>
+      <div class="card"><h3>經常帳</h3><p>商品和服務的貿易，加上<b>移轉支付</b>（例如政府援助）。</p></div>
+      <div class="card" style="margin-top:12px"><h3>資本帳</h3><p>資產的買賣：股票、債券、土地。</p><p class="small muted">（補充：現行國際標準多稱為「金融帳」）</p></div>
+    </div>
+    <div>
+      <h3>美國國際收支（十億美元）</h3>
+      <table>
+        <tr><th></th><th>2004</th><th>2006</th><th>2009</th><th>2011</th></tr>
+        <tr><td>經常帳</td><td class="down">−631.1</td><td class="down">−803.5</td><td class="down">−419.9</td><td class="down">−465.9</td></tr>
+        <tr><td>資本帳</td><td class="up">631.1</td><td class="up">773.8</td><td class="up">419.9</td><td class="up">426.9</td></tr>
+      </table>
+      <p class="small muted">摘自 Table 13-1（Bureau of Economic Analysis）</p>
+      <p>一邊是負的、一邊是正的，而且<b>差不多一樣大</b>。為什麼？下一頁。</p>
+    </div>
+  </div>
+  <div class="note">國際收支；經常帳；資本帳；移轉支付，如政府補助。</div>
+</div></section>
+
+<!-- 5 -->
+<section class="slide"><div class="wrap">
+  <h2>帳一定要平：經常帳＋資本帳＝0</h2>
+  <div class="formula" style="font-size:clamp(26px,3.6vw,44px)">經常帳 ＋ 資本帳 ＝ 0</div>
+  <div class="cols">
+    <div class="card">
+      <h3>💳 個人</h3>
+      <p>花得比賺得多（赤字），就得<b>賣掉資產</b>或<b>借錢</b>。</p>
+      <p class="small muted">就像刷卡：這個月買超過薪水，差額是向銀行借的（比喻為補充）</p>
+    </div>
+    <div class="card">
+      <h3>🏛️ 國家</h3>
+      <p>經常帳赤字（買外國貨超過賣出）→ 向外國<b>賣資產或借錢</b> → 資本帳盈餘。</p>
+      <p>美國長年經常帳赤字，靠外國資金流入支應。</p>
+    </div>
+  </div>
+  <div class="note">經常帳的赤字會伴隨對等的資本流入。</div>
+</div></section>
+
+<!-- 6 -->
+<section class="slide"><div class="wrap">
+  <h2>匯率是什麼？</h2>
+  <p class="big-q" style="text-align:center">匯率＝一種貨幣用另一種貨幣表示的<span class="hl">價格</span></p>
+  <div class="cols">
+    <div class="card">
+      <h3>🥪 愛爾蘭的三明治</h3>
+      <p>1999 年 8 月，1 愛爾蘭鎊可以換 1.38 美元 → 名目匯率 <span class="m"><i>e</i></span> = 1.38</p>
+      <p>三明治賣 2.39 鎊，換成美元是：</p>
+      <div class="formula" style="font-size:clamp(20px,2.6vw,30px)">1.38 × 2.39 = $3.30</div>
+    </div>
+    <div class="card">
+      <h3>兩種匯率制度</h3>
+      <ol>
+        <li><b>固定匯率</b>：央行把價格守住</li>
+        <li><b>浮動匯率</b>：交給市場決定</li>
+      </ol>
+    </div>
+  </div>
+  <div class="note">一種貨幣相對另一種的價格；簡報印 1.39，已更正為 1.38。</div>
+</div></section>
+
+<!-- 7 -->
+<section class="slide"><div class="wrap">
+  <h2>固定匯率：央行守價格</h2>
+  <div class="cols">
+    <div>
+      <p>央行用<b>固定價格</b>買賣本國貨幣：</p>
+      <ul>
+        <li>沒人會用比固定價更貴的價格買美元</li>
+        <li>沒人會用比固定價更便宜的價格賣美元</li>
+      </ul>
+      <p>央行在外匯市場買賣外幣，叫做<b>干預</b>；要干預多少，取決於國際收支的缺口。</p>
+      <p class="small muted">🧤 就像守門員，球（價格）往哪偏就往哪撲（比喻為補充）</p>
+    </div>
+    <div class="card">
+      <h3>🇯🇵 日本的例子</h3>
+      <p>美國對日本有逆差 → 想換日圓的人比想賣日圓的人多 → 日圓有升值壓力</p>
+      <p>→ 日本央行<b>買進多餘的美元、付出日圓</b>，把匯率壓回固定價。</p>
+      <p>→ 所以央行手上必須有一筆外幣庫存：<span class="hl">外匯存底</span>。</p>
+    </div>
+  </div>
+  <div class="note">本國貨幣和另一種貨幣維持一個固定的兌換比率；為了不讓日元升值，買進多餘美金；央行必須持有外幣庫存（外匯存底）。</div>
+</div></section>
+
+<!-- 8 -->
+<section class="slide"><div class="wrap">
+  <h2>存底用完會怎樣？</h2>
+  <p>如果一國<b>持續</b>國際收支逆差，對外幣的需求一直大於供給，央行就得一直賣外幣：</p>
+  <div class="bars">
+    <div class="row"><div class="name">第 1 年</div><div class="track"><div class="seg" style="width:100%;background:var(--green)">外匯存底充足</div></div><div class="total">💰💰💰</div></div>
+    <div class="row"><div class="name">第 2 年</div><div class="track"><div class="seg" style="width:60%;background:var(--yellow)">持續賣外幣</div></div><div class="total">💰💰</div></div>
+    <div class="row"><div class="name">第 3 年</div><div class="track"><div class="seg" style="width:22%;background:var(--accent)">快見底</div></div><div class="total">💰</div></div>
+    <div class="row"><div class="name">第 4 年</div><div class="track"><div class="seg" style="width:3%;background:var(--accent)"></div></div><div class="total">❌</div></div>
+  </div>
+  <p class="small muted">示意圖</p>
+  <div class="flow">
+    <div class="box">持續逆差</div><div class="arrow">→</div>
+    <div class="box">存底耗盡</div><div class="arrow">→</div>
+    <div class="box">無法再干預</div><div class="arrow">→</div>
+    <div class="box out">在這之前<br>央行就會<b>貶值</b></div>
+  </div>
+  <div class="note">對外幣需求遠大於供給；最終耗盡外匯存底；在存底歸 0 前，央行會主動貶值。</div>
+</div></section>
+
+<!-- 9 -->
+<section class="slide"><div class="wrap">
+  <h2>浮動匯率：交給市場</h2>
+  <p>央行<b>不干預</b>，讓匯率自己調整到外幣供需相等。</p>
+  <div class="flow">
+    <div class="box">① 日本對美出口↑<br><span class="small muted">美國人要付更多日圓</span></div><div class="arrow">→</div>
+    <div class="box">② 日圓需求↑</div><div class="arrow">→</div>
+    <div class="box core">③ 日圓升值<br>0.86 → 0.90 美分</div><div class="arrow">→</div>
+    <div class="box out">④ 日本貨變貴<br>美國人買少一點</div>
+  </div>
+  <p class="big-q" style="text-align:center;font-size:clamp(19px,2.4vw,26px)">價格自動調整，不用動用外匯存底</p>
+  <div class="note">央行允許匯率波動，匯率高低完全由外匯市場供給和需求決定；日元需求增加；價格↑，需求↓。</div>
+</div></section>
+
+<!-- 10 -->
+<section class="slide"><div class="wrap">
+  <h2>長期：購買力平價（PPP）</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-barley"></svg><p class="small muted" style="text-align:center">英國／荷蘭大麥價格比（對數），示意圖，仿 Figure 13-2</p></div>
+    <div>
+      <p>長期來看，匯率由兩國貨幣的<b>購買力</b>決定。</p>
+      <p><b>購買力平價</b>：同一單位本國貨幣，在國內和國外能買到<span class="hl">一樣多的東西</span>。</p>
+      <ul>
+        <li>600 年的大麥價格：<span class="up">傾向相等</span>（圍著 0 上下跑）</li>
+        <li>但有<span class="down">很長的偏離期</span></li>
+        <li>現代估計：偏離約 <b>4 年縮小一半</b></li>
+      </ul>
+      <p class="small muted">PPP 長期成立，但只是決定匯率的因素之一。</p>
+    </div>
+  </div>
+  <div class="note">匯率長期要看購買力；一單位本國貨幣在國內外能買到相同數量商品；實質大麥匯率傾向相等；長期的偏離。</div>
+</div></section>
+
+<!-- 11 -->
+<section class="slide"><div class="wrap">
+  <h2>實質匯率 R = ePf / P</h2>
+  <div class="formula" style="font-size:clamp(30px,4.4vw,54px)"><i>R</i> = <span class="frac"><span><i>e</i> · <i>P<sub>f</sub></i></span><span><i>P</i></span></span></div>
+  <div class="icons" style="grid-template-columns:repeat(3,1fr)">
+    <div class="icon"><div class="s">e</div><b>名目匯率</b></div>
+    <div class="icon"><div class="s">P<sub>f</sub></div><b>外國物價</b></div>
+    <div class="icon"><div class="s">P</div><b>本國物價</b></div>
+  </div>
+  <p style="text-align:center;margin-top:14px">意思：換<b>一單位外國貨</b>，要用<b>幾單位本國貨</b>。</p>
+  <table>
+    <tr><th><span class="m"><i>R</i></span> = 1</th><th><span class="m"><i>R</i></span> &gt; 1</th><th><span class="m"><i>R</i></span> &lt; 1</th></tr>
+    <tr><td>處於 PPP</td><td>外國貨比較貴</td><td>外國貨比較便宜</td></tr>
+  </table>
+  <p class="small muted">⚠️ 原簡報第 22 張把 R 寫成「real interest rate」，正確應為實質<b>匯率</b>。</p>
+  <div class="note">實質匯率＝名目匯率 × 外國物價 ÷ 本國物價；用本國商品換取一單位外國商品所需數量。</div>
+</div></section>
+
+<!-- 12 -->
+<section class="slide"><div class="wrap">
+  <h2>貶值是好事還是壞事？</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>📉 本幣貶值：<span class="m"><i>R</i></span> 從 2 → 3</h3>
+      <p>1 單位外國貨可以換 3 單位本國貨</p>
+      <p>→ 本國貨相對<b>便宜</b></p>
+      <p>→ 大家多買本國貨，<span class="up">出口有利</span>、進口不利</p>
+      <p class="big-q" style="font-size:clamp(18px,2.2vw,24px)">經常帳<span class="up">改善</span></p>
+    </div>
+    <div class="card">
+      <h3>📈 本幣升值：<span class="m"><i>R</i></span> 從 2 → 1</h3>
+      <p>1 單位外國貨只能換 1 單位本國貨</p>
+      <p>→ 本國貨相對<b>變貴</b></p>
+      <p>→ <span class="up">進口有利</span>、出口不利</p>
+      <p class="big-q" style="font-size:clamp(18px,2.2vw,24px)">經常帳<span class="down">惡化</span></p>
+    </div>
+  </div>
+  <p style="text-align:center" class="muted">所以貶值對出口商是好消息，對買進口品的消費者是壞消息。</p>
+</div></section>
+
+<!-- 13 -->
+<section class="slide"><div class="wrap">
+  <h2>工具一：IS 曲線（商品市場）</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-is"></svg></div>
+    <div>
+      <p><b>IS 曲線</b>：讓商品市場均衡（產出＝需求）的所有「產出 <span class="m"><i>Y</i></span>、利率 <span class="m"><i>i</i></span>」組合。</p>
+      <div class="formula" style="font-size:clamp(17px,2.1vw,24px)"><i>Y</i> = <i>C</i> + <i>I</i>(<i>i</i>) + <i>G</i> + (<i>X</i> − <i>Q</i>)</div>
+      <div class="flow" style="justify-content:flex-start">
+        <div class="box">利率↓</div><div class="arrow">→</div>
+        <div class="box">借錢便宜</div><div class="arrow">→</div>
+        <div class="box">投資↑</div><div class="arrow">→</div>
+        <div class="box core">產出↑</div>
+      </div>
+      <p>利率愈低、產出愈高 → IS <b>向右下傾斜</b>。</p>
+      <p class="small muted">假設物價固定、需求都能被滿足。🔣 進口用 <i>Q</i>（原簡報附錄寫 <i>M</i>）。</p>
+    </div>
+  </div>
+  <div class="note">IS：國際商品市場；物價固定、供給無虞。</div>
+</div></section>
+
+<!-- 14 -->
+<section class="slide"><div class="wrap">
+  <h2>工具二：LM 曲線（貨幣市場）</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-islm"></svg></div>
+    <div>
+      <p><b>LM 曲線</b>：讓貨幣市場均衡（貨幣供給＝貨幣需求）的所有組合。</p>
+      <ul>
+        <li>貨幣供給 <span class="m"><i>M<sup>s</sup></i> = <i>M̄</i></span>：由央行決定</li>
+        <li>貨幣需求 <span class="m"><i>M<sup>d</sup></i>(<i>i</i>, <i>Y</i>, <i>P</i>)</span>：受利率、所得、物價影響</li>
+      </ul>
+      <div class="flow" style="justify-content:flex-start">
+        <div class="box">產出↑</div><div class="arrow">→</div>
+        <div class="box">要用的錢↑</div><div class="arrow">→</div>
+        <div class="box core">利率↑</div>
+      </div>
+      <p>→ LM <b>向右上傾斜</b>。兩條線的交點 <b>E</b>，就是經濟的短期均衡。</p>
+    </div>
+  </div>
+  <div class="note">LM：貨幣市場。</div>
+</div></section>
+
+<!-- 15 -->
+<section class="slide"><div class="wrap">
+  <h2>打開國門：淨出口加進 IS</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-isshift"></svg><p class="small muted" style="text-align:center">仿 Figure 13-3：外國需求增加，IS 右移</p></div>
+    <div>
+      <div class="formula" style="font-size:clamp(17px,2.1vw,24px)"><i>Y</i> = <i>DS</i>(<i>Y</i>, <i>i</i>) + <i>NX</i>(<i>Y</i>, <i>Y<sub>f</sub></i>, <i>R</i>)</div>
+      <p class="small muted" style="text-align:center"><i>DS</i> = <i>C</i>+<i>I</i>+<i>G</i>（國內支出）　<i>NX</i> = <i>X</i>(<i>Y<sub>f</sub></i>, <i>R</i>) − <i>Q</i>(<i>Y</i>, <i>R</i>)</p>
+      <table>
+        <tr><th>變動</th><th>淨出口</th><th>IS</th></tr>
+        <tr><td>外國所得 <span class="m"><i>Y<sub>f</sub></i></span>↑</td><td class="up">改善</td><td>右移</td></tr>
+        <tr><td>本幣實質貶值（<span class="m"><i>R</i></span>↑）</td><td class="up">改善</td><td>右移</td></tr>
+        <tr><td>本國所得 <span class="m"><i>Y</i></span>↑</td><td class="down">進口↑、惡化</td><td>—</td></tr>
+      </table>
+      <p>外國多買我們的東西 → 任何利率下需求都變多 → 利率、產出、就業都上升。</p>
+    </div>
+  </div>
+  <div class="note">出口取決於外國所得、實質匯率；Q↑，NX↓；NX 增加，在任何利率水準 AD 都增加。</div>
+</div></section>
+
+<!-- 16 -->
+<section class="slide"><div class="wrap">
+  <h2>錢會漏到國外：邊際進口傾向</h2>
+  <div class="cols">
+    <div>
+      <p><b>邊際進口傾向</b> <span class="m"><i>m</i></span>：國內所得多 1 元，進口會增加多少。</p>
+      <p>利率下降 → 投資↑ → 產出↑，但多賺的錢有一部分<b>拿去買進口品</b>，沒有回到本國產出。</p>
+      <p class="big-q" style="font-size:clamp(19px,2.3vw,26px)">→ 開放經濟的 IS 曲線<br><span class="hl">比封閉經濟陡</span></p>
+      <p class="small muted">🪣 像第 14 章水桶多了一個洞：需求從「進口」這個洞流走（比喻為補充）</p>
+    </div>
+    <div class="card">
+      <h3>和第 14 章的 MPC 對照（補充）</h3>
+      <table>
+        <tr><th></th><th>MPC</th><th>邊際進口傾向 <span class="m"><i>m</i></span></th></tr>
+        <tr><td>多 1 元所得</td><td>多花多少</td><td>多買多少進口</td></tr>
+        <tr><td>錢去哪</td><td class="up">回到本國</td><td class="down">流到國外</td></tr>
+        <tr><td>對 IS</td><td>變平</td><td>變陡</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="note">GDP 每增加一元會導致進口支出增加的金額；i↓ → 投資增加 → Y↑。</div>
+</div></section>
+
+<!-- 17 -->
+<section class="slide"><div class="wrap">
+  <h2>資金哪裡報酬高就往哪跑</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-bp"></svg></div>
+    <div>
+      <p><b>完全資本移動</b>：投資人可以在任何國家、快速、低成本、不限量地買賣資產。</p>
+      <div class="formula" style="font-size:clamp(16px,2vw,23px)"><i>BP</i> = <i>NX</i> + <i>CF</i>(<i>i</i> − <i>i<sub>f</sub></i>)</div>
+      <ul>
+        <li><span class="m"><i>i</i> &gt; <i>i<sub>f</sub></i></span>（本國利率比世界高）→ <span class="up">資本流入</span></li>
+        <li><span class="m"><i>i</i> &lt; <i>i<sub>f</sub></i></span> → <span class="down">資本流出</span></li>
+      </ul>
+      <p>差一點點就會引發大量資金流動 → 國際收支只在 <span class="m"><i>i</i> = <i>i<sub>f</sub></i></span> 平衡 → 圖上是一條<b>水平線</b>。</p>
+    </div>
+  </div>
+  <div class="note">無障礙交易；錢會往高報酬或借貸成本低走；國內利率高於世界利率時會購買國內；利差。</div>
+</div></section>
+
+<!-- 18 -->
+<section class="slide"><div class="wrap">
+  <h2>Mundell-Fleming：開放經濟版 IS-LM</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-mf"></svg></div>
+    <div>
+      <p>由 <b>Mundell</b> 和 <b>Fleming</b> 提出：把匯率和完全資本移動加進 IS-LM。</p>
+      <ul>
+        <li>藍線 IS：商品市場</li>
+        <li>綠線 LM：貨幣市場</li>
+        <li>白線 BP = 0：國際收支平衡，利率被釘在 <span class="m"><i>i<sub>f</sub></i></span></li>
+      </ul>
+      <p>假設國內物價固定。三條線交在 <b>E</b>。</p>
+      <p class="big-q" style="font-size:clamp(18px,2.2vw,24px)">接下來四頁：<br>固定 / 浮動匯率 × 貨幣 / 財政政策</p>
+    </div>
+  </div>
+  <div class="note">資本高度自由流動；固定匯率 → 央行不能升值或貶值；假設國內價格固定。</div>
+</div></section>
+
+<!-- 19 -->
+<section class="slide"><div class="wrap">
+  <h2>固定匯率＋貨幣擴張：沒用</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-fixm"></svg></div>
+    <div>
+      <ol>
+        <li>央行多印錢 → LM 右移到 LM′，利率跌到 <span class="m"><i>i<sub>f</sub></i></span> 以下（E′）</li>
+        <li>資金往外跑 → 國際收支逆差、<b>貶值壓力</b></li>
+        <li>為了守匯率，央行<b>賣外匯、收回本幣</b></li>
+        <li>錢又變少 → LM 退回原位</li>
+      </ol>
+      <p class="big-q" style="font-size:clamp(19px,2.3vw,26px)">結果：<span class="down">貨幣政策無效</span></p>
+      <p class="small muted">反過來緊縮也一樣：利率↑ → 資金湧入 → 央行被迫釋出本幣 → 利率又降回來。</p>
+    </div>
+  </div>
+  <div class="note">賣外匯買本國；緊縮貨幣 i↑ → 大量資金湧入（外國人要賣外幣買本幣）→ 釋放本幣 → i↓。</div>
+</div></section>
+
+<!-- 20 -->
+<section class="slide"><div class="wrap">
+  <h2>固定匯率＋財政擴張：很有效</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-fixf"></svg></div>
+    <div>
+      <ol>
+        <li>政府多花錢 → IS 右移，利率、產出都上升（E′）</li>
+        <li>利率高於 <span class="m"><i>i<sub>f</sub></i></span> → 資金湧入、<b>升值壓力</b></li>
+        <li>為了守匯率，央行<b>必須釋出本幣</b> → LM 也右移</li>
+        <li>利率回到 <span class="m"><i>i<sub>f</sub></i></span>，產出<b>再增加</b>（E″）</li>
+      </ol>
+      <p class="big-q" style="font-size:clamp(19px,2.3vw,26px)">結果：<span class="up">財政政策效果最大</span></p>
+    </div>
+  </div>
+  <div class="note">財政政策；釋出本幣 → i↓。</div>
+</div></section>
+
+<!-- 21 -->
+<section class="slide"><div class="wrap">
+  <h2>浮動匯率＋財政擴張：沒用</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-flof"></svg></div>
+    <div>
+      <p class="small">浮動匯率：央行不干預，國際收支自動平衡；<span class="m"><i>i</i> &gt; <i>i<sub>f</sub></i></span> → 升值 → IS 左移。</p>
+      <ol>
+        <li>政府多花錢（或出口增加）→ IS 右移到 E′</li>
+        <li>利率高於 <span class="m"><i>i<sub>f</sub></i></span> → 外資湧入</li>
+        <li>本幣<b>升值</b> → 本國貨變貴 → 淨出口↓</li>
+        <li>IS 被推回去，經濟回到 E</li>
+      </ol>
+      <p class="big-q" style="font-size:clamp(19px,2.3vw,26px)">結果：<span class="down">財政政策無效</span></p>
+    </div>
+  </div>
+  <div class="note">浮動匯率央行不干預外匯市場；BP = 0；在浮動匯率無效：政府撒錢 → i &gt; i_f → 外資湧入 → 本幣升值。</div>
+</div></section>
+
+<!-- 22 -->
+<section class="slide"><div class="wrap">
+  <h2>浮動匯率＋貨幣擴張：很有效</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-flom"></svg></div>
+    <div>
+      <ol>
+        <li>央行多印錢 → 利率↓ → LM 右移到 E′</li>
+        <li>利率低於 <span class="m"><i>i<sub>f</sub></i></span> → <b>資本流出</b>、本幣<b>貶值</b></li>
+        <li>進口變貴、本國貨變便宜 → 淨出口↑</li>
+        <li>IS 右移到 E″，利率回到 <span class="m"><i>i<sub>f</sub></i></span></li>
+      </ol>
+      <p class="big-q" style="font-size:clamp(19px,2.3vw,26px)">結果：<span class="up">產出增加＋本幣貶值</span></p>
+      <p class="small muted">⚠️ 原簡報第 35 張寫成「capital inflows」，依邏輯應為資本流出。</p>
+    </div>
+  </div>
+  <div class="note">在 E′ 點 i &lt; i_f → 投資人賣本幣買外幣 → 本幣貶值，本國貨變便宜 → 國內需求增加，NX↑ → IS 向右。</div>
+</div></section>
+
+<!-- 23 -->
+<section class="slide"><div class="wrap">
+  <h2>總整理：政策四格表</h2>
+  <table>
+    <tr><th></th><th>貨幣擴張</th><th>財政擴張</th></tr>
+    <tr><td><b>固定匯率</b></td><td class="down" style="font-size:1.15em">❌ 無效<br><span class="small muted">央行守匯率，被迫收回本幣</span></td><td class="up" style="font-size:1.15em">✅ 效果最大<br><span class="small muted">央行被迫釋出本幣，LM 跟著右移</span></td></tr>
+    <tr><td><b>浮動匯率</b></td><td class="up" style="font-size:1.15em">✅ 效果最大<br><span class="small muted">貶值帶動淨出口</span></td><td class="down" style="font-size:1.15em">❌ 無效<br><span class="small muted">升值把需求抵銷掉</span></td></tr>
+  </table>
+  <p class="small muted">Mundell（1963），假設完全資本移動</p>
+  <div class="cols" style="margin-top:12px">
+    <div class="card"><b>固定匯率：</b>財政有效、貨幣沒用——守匯率就交出了貨幣的方向盤。</div>
+    <div class="card"><b>浮動匯率：</b>貨幣有效、財政沒用——匯率自己動，把財政刺激吃掉。</div>
+  </div>
+  <div class="warn small"><b>補充：不可能三角</b>——固定匯率、資本自由移動、獨立貨幣政策，三個最多只能選兩個。</div>
+</div></section>
+
+<!-- 24 -->
+<section class="slide"><div class="wrap">
+  <h2>回到新興市場＋重點回顧</h2>
+  <div class="cols">
+    <div>
+      <h3>用模型讀 2022 年的風險</h3>
+      <div class="warn small"><b>推論（非簡報原文）：</b>美國升息 → 世界利率 <i>i<sub>f</sub></i>↑ → 新興市場資本流出 → 浮動匯率國貨幣貶值、固定匯率國耗用存底；中國放緩 → <i>Y<sub>f</sub></i>↓ → 新興市場出口減少。</div>
+      <h3 style="margin-top:.6em">五個重點</h3>
+      <ol>
+        <li>經常帳＋資本帳＝0</li>
+        <li>固定匯率要靠外匯存底干預</li>
+        <li>長期看 PPP；實質匯率 <span class="m"><i>R</i> = <i>eP<sub>f</sub></i>/<i>P</i></span></li>
+        <li>開放經濟 IS 加入淨出口，而且比較陡</li>
+        <li>Mundell-Fleming 政策四格表</li>
+      </ol>
+    </div>
+    <div>
+      <h3>常見誤解</h3>
+      <ul>
+        <li>❌ 貶值一定是壞事</li>
+        <li>❌ 固定匯率下央行還能自由調整貨幣</li>
+        <li>❌ 浮動匯率下財政擴張是靠利率排擠投資（其實是升值排擠淨出口）</li>
+        <li>❌ 浮動匯率貨幣擴張會帶來「資本流入」</li>
+      </ul>
+      <p class="small muted">想深入看：wiki 的「Mundell-Fleming 模型」「開放經濟下的政策效果」「國際收支」頁</p>
+    </div>
+  </div>
+</div></section>
+
+<nav>
+  <span class="sticks" aria-hidden="true"><i></i><i></i><i></i></span>
+  <span class="eraser" aria-hidden="true"></span>
+  <a class="home" href="../index.html" aria-label="回到單元首頁">🏠 首頁</a>
+  <button id="prev" aria-label="上一頁">← 上一頁</button>
+  <span id="counter"></span>
+  <button id="next" aria-label="下一頁">下一頁 →</button>
+</nav>
+
+<script>
+// ---------- chart helper (inline SVG, no libraries) ----------
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function chart(id, cfg){
+  const svg = document.getElementById(id); if (!svg) return;
+  const W = cfg.w || 520, H = cfg.h || 360, L = 46, R = cfg.right || 92, T = 18, B = 40;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const x0 = cfg.xmin || 0, x1 = cfg.xmax || 1, y0 = cfg.ymin || 0, y1 = cfg.ymax || 1;
+  const X = x => L + (x - x0) / (x1 - x0) * (W - L - R);
+  const Y = y => H - B - (y - y0) / (y1 - y0) * (H - T - B);
+  const defs = el('defs', {}, svg);
+  const mk = el('marker', {id: id + '-arr', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse'}, defs);
+  el('path', {d: 'M0,0 L10,5 L0,10 z', fill: 'var(--accent)'}, mk);
+  // axes
+  el('line', {x1: L, y1: H - B, x2: W - R + 20, y2: H - B, class: 'axis'}, svg);
+  el('line', {x1: L, y1: T - 4, x2: L, y2: H - B, class: 'axis'}, svg);
+  if (cfg.xlabel) el('text', {x: W - R + 24, y: H - B + 5, class: 'lbl'}, svg, cfg.xlabel);
+  if (cfg.ylabel) el('text', {x: L - 8, y: T - 4, 'text-anchor': 'end', class: 'lbl'}, svg, cfg.ylabel);
+  (cfg.xticks || []).forEach(t => el('text', {x: X(t[0]), y: H - B + 18, 'text-anchor': 'middle', class: 'tick'}, svg, t[1]));
+  (cfg.yticks || []).forEach(t => el('text', {x: L - 6, y: Y(t[0]) + 4, 'text-anchor': 'end', class: 'tick'}, svg, t[1]));
+  (cfg.guides || []).forEach(g => el('line', {x1: X(g[0]), y1: Y(g[1]), x2: X(g[2]), y2: Y(g[3]), class: 'guide'}, svg));
+  (cfg.curves || []).forEach(c => {
+    const a = c.from !== undefined ? c.from : x0, b = c.to !== undefined ? c.to : x1, pts = [];
+    for (let i = 0; i <= 160; i++){ const x = a + (b - a) * i / 160, y = c.fn(x); if (y <= y1 * 1.01) pts.push(X(x).toFixed(1) + ',' + Y(y).toFixed(1)); }
+    el('polyline', {points: pts.join(' '), class: 'curve' + (c.dash ? ' dash' : ''), style: `stroke:var(--${c.color})`}, svg);
+    if (c.label){
+      const lx = c.lx !== undefined ? c.lx : b;
+      el('text', {x: X(lx) + 6, y: Y(c.fn(lx)) + 5 + (c.dy || 0), class: 'lbl', style: `fill:var(--${c.color})`}, svg, c.label);
+    }
+  });
+  (cfg.data || []).forEach(d => {
+    el('polyline', {points: d.pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' '), class: 'curve', style: `stroke:var(--${d.color})`}, svg);
+  });
+  (cfg.segs || []).forEach(s => el('line', {x1: X(s[0]), y1: Y(s[1]), x2: X(s[2]), y2: Y(s[3]), class: s[4] || 'step'}, svg));
+  (cfg.arrows || []).forEach(a => el('line', {x1: X(a[0]), y1: Y(a[1]), x2: X(a[2]), y2: Y(a[3]), stroke: 'var(--accent)', 'stroke-width': 2.5, 'marker-end': `url(#${id}-arr)`}, svg));
+  (cfg.points || []).forEach(p => {
+    el('circle', {cx: X(p[0]), cy: Y(p[1]), r: 5, class: 'pt', style: 'fill:var(--ink)'}, svg);
+    if (p[2]) el('text', {x: X(p[0]) + (p[3] || 8), y: Y(p[1]) + (p[4] || -8), class: 'lbl'}, svg, p[2]);
+  });
+  (cfg.texts || []).forEach(t => el('text', {x: X(t[0]), y: Y(t[1]), 'text-anchor': t[3] || 'start', class: t[4] || '', style: t[5] || ''}, svg, t[2]));
+}
+
+// ---------- chapter 13 charts (illustrative) ----------
+const IS = x => 0.9 - 0.8 * x, IS2 = x => 1.1 - 0.8 * x;
+const LM = x => 0.1 + 0.8 * x, LM2 = x => -0.1 + 0.8 * x;
+const iF = 0.5;
+const base = {xmax: 1, ymax: 1, xlabel: 'Y', ylabel: 'i', right: 70};
+
+chart('c-is', Object.assign({}, base, {
+  curves: [{fn: IS, color: 'blue', label: 'IS', from: .05, to: .98}],
+  guides: [[0, IS(.3), .3, IS(.3)], [.3, 0, .3, IS(.3)], [0, IS(.65), .65, IS(.65)], [.65, 0, .65, IS(.65)]],
+  points: [[.3, IS(.3)], [.65, IS(.65)]],
+  arrows: [[.33, .08, .62, .08]],
+  yticks: [[IS(.3), 'i₁'], [IS(.65), 'i₂']], xticks: [[.3, 'Y₁'], [.65, 'Y₂']]
+}));
+
+chart('c-islm', Object.assign({}, base, {
+  curves: [{fn: IS, color: 'blue', label: 'IS', from: .05, to: .98}, {fn: LM, color: 'green', label: 'LM', from: .02, to: 1}],
+  guides: [[0, .5, .5, .5], [.5, 0, .5, .5]],
+  points: [[.5, .5, 'E', 8, -10]], yticks: [[.5, 'i*']], xticks: [[.5, 'Y*']]
+}));
+
+chart('c-isshift', Object.assign({}, base, {
+  curves: [{fn: IS, color: 'blue', label: 'IS', from: .05, to: .98}, {fn: IS2, color: 'blue', dash: true, label: "IS'", from: .15, to: 1},
+           {fn: LM, color: 'green', label: 'LM', from: .02, to: 1}],
+  guides: [[.5, 0, .5, .5], [.625, 0, .625, .6]],
+  points: [[.5, .5, 'E', -18, -6], [.625, .6, "E'", 8, -8]],
+  arrows: [[.3, .66, .48, .66]], xticks: [[.5, 'Y₀'], [.625, "Y'"]]
+}));
+
+chart('c-bp', Object.assign({}, base, {
+  segs: [[0, iF, .95, iF, 'bpline']],
+  texts: [[.97, iF + .01, 'BP = 0', 'start', 'lbl'], [.45, .72, 'i > i_f：資本流入 ⬆', 'middle', 'lbl', 'fill:var(--green)'], [.45, .28, 'i < i_f：資本流出 ⬇', 'middle', 'lbl', 'fill:var(--accent)']],
+  yticks: [[iF, 'i = i_f']]
+}));
+
+const mfBase = (extra) => Object.assign({}, base, {right: 80}, extra);
+chart('c-mf', mfBase({
+  curves: [{fn: IS, color: 'blue', label: 'IS', from: .05, to: .98}, {fn: LM, color: 'green', label: 'LM', from: .02, to: 1}],
+  segs: [[0, iF, .95, iF, 'bpline']],
+  texts: [[.97, iF + .01, 'BP = 0', 'start', 'lbl']],
+  points: [[.5, .5, 'E', -6, -12]], yticks: [[iF, 'i_f']], xticks: [[.5, 'Y₀']]
+}));
+
+chart('c-fixm', mfBase({
+  curves: [{fn: IS, color: 'blue', label: 'IS', from: .05, to: .98}, {fn: LM, color: 'green', label: 'LM', from: .02, to: 1},
+           {fn: LM2, color: 'green', dash: true, label: "LM'", from: .2, to: 1, lx: .95, dy: 14}],
+  segs: [[0, iF, .95, iF, 'bpline']],
+  texts: [[.97, iF + .01, 'BP = 0', 'start', 'lbl'], [.4, .2, '收回本幣，LM 退回', 'middle', 'tick']],
+  points: [[.5, .5, 'E', -6, -12], [.625, .4, "E'", 8, 14]],
+  arrows: [[.52, .32, .29, .32]], yticks: [[iF, 'i_f']]
+}));
+
+chart('c-fixf', mfBase({
+  curves: [{fn: IS, color: 'blue', label: 'IS', from: .05, to: .98}, {fn: IS2, color: 'blue', dash: true, label: "IS'", from: .15, to: 1},
+           {fn: LM, color: 'green', label: 'LM', from: .02, to: 1}, {fn: LM2, color: 'green', dash: true, label: "LM'", from: .2, to: 1, lx: .95, dy: 14}],
+  segs: [[0, iF, .95, iF, 'bpline']],
+  texts: [[.97, iF + .01, 'BP = 0', 'start', 'lbl']],
+  points: [[.5, .5, 'E', -20, -6], [.625, .6, "E'", -8, -12], [.75, .5, 'E″', 6, 18]],
+  guides: [[.5, 0, .5, .5], [.75, 0, .75, .5]], xticks: [[.5, 'Y₀'], [.75, "Y''"]], yticks: [[iF, 'i_f']]
+}));
+
+chart('c-flof', mfBase({
+  curves: [{fn: IS, color: 'blue', label: 'IS', from: .05, to: .98}, {fn: IS2, color: 'blue', dash: true, label: "IS'", from: .15, to: 1},
+           {fn: LM, color: 'green', label: 'LM', from: .02, to: 1}],
+  segs: [[0, iF, .95, iF, 'bpline']],
+  texts: [[.97, iF + .01, 'BP = 0', 'start', 'lbl'], [.82, .82, '升值把 IS 推回', 'middle', 'tick']],
+  points: [[.5, .5, 'E', -20, -6], [.625, .6, "E'", 8, -8]],
+  arrows: [[.61, .588, .565, .552], [.555, .544, .515, .512]],
+  guides: [[.5, 0, .5, .5]], xticks: [[.5, 'Y₀']], yticks: [[iF, 'i_f']]
+}));
+
+chart('c-flom', mfBase({
+  curves: [{fn: IS, color: 'blue', label: 'IS', from: .05, to: .98}, {fn: IS2, color: 'blue', dash: true, label: "IS'", from: .15, to: 1},
+           {fn: LM, color: 'green', label: 'LM', from: .02, to: 1}, {fn: LM2, color: 'green', dash: true, label: "LM'", from: .2, to: 1, lx: .95, dy: 14}],
+  segs: [[0, iF, .95, iF, 'bpline']],
+  texts: [[.97, iF + .01, 'BP = 0', 'start', 'lbl']],
+  points: [[.5, .5, 'E', -20, -6], [.625, .4, "E'", 8, 14], [.75, .5, 'E″', 6, -10]],
+  arrows: [[.64, .412, .69, .452], [.7, .46, .735, .488]],
+  guides: [[.5, 0, .5, .5], [.75, 0, .75, .5]], xticks: [[.5, 'Y₀'], [.75, "Y'"]], yticks: [[iF, 'i_f']]
+}));
+
+// barley: deterministic mean-reverting wiggle around 0 (illustrative only)
+const barleyPts = [];
+let v = 0.3, seed = 7;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 - 0.5; };
+for (let yr = 1370; yr <= 1980; yr += 5) {
+  const drift = yr > 1640 && yr < 1760 ? 0.75 : (yr < 1600 ? -0.3 : 0.1);
+  v = v + 0.25 * (drift - v) + 0.45 * rnd();
+  barleyPts.push([yr, Math.max(-1.3, Math.min(1.3, v))]);
+}
+chart('c-barley', {
+  xmin: 1370, xmax: 1980, ymin: -1.5, ymax: 1.5, right: 30, ylabel: '對數價格比',
+  data: [{color: 'blue', pts: barleyPts}],
+  segs: [[1370, 0, 1980, 0, 'guide']],
+  xticks: [[1400, '1400'], [1500, '1500'], [1600, '1600'], [1700, '1700'], [1800, '1800'], [1900, '1900']],
+  yticks: [[-1, '−1'], [0, '0'], [1, '1']]
+});
+
+// style the BP = 0 lines and highlighted segments
+document.querySelectorAll('svg.chart line.bpline').forEach(l => { l.setAttribute('stroke', 'var(--ink)'); l.setAttribute('stroke-width', 3.4); l.style.filter = 'url(#chalk)'; });
+document.querySelectorAll('svg.chart line').forEach(l => { if (l.getAttribute('class') === '') { l.setAttribute('stroke', 'var(--yellow)'); l.setAttribute('stroke-width', 4); } });
+
+// ---------- slide navigation ----------
+const slides = [...document.querySelectorAll('.slide')];
+const counter = document.getElementById('counter'), bar = document.getElementById('progress');
+let cur = 0;
+function show(i){
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+  slides[cur].scrollTop = 0;
+  counter.textContent = (cur + 1) + ' / ' + slides.length;
+  bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+  if (location.hash !== '#' + (cur + 1)) history.replaceState(null, '', '#' + (cur + 1));
+}
+document.getElementById('prev').onclick = () => show(cur - 1);
+document.getElementById('next').onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','PageDown',' ','Enter'].includes(e.key)) { e.preventDefault(); show(cur + 1); }
+  else if (['ArrowLeft','PageUp','Backspace'].includes(e.key)) { e.preventDefault(); show(cur - 1); }
+  else if (e.key === 'Home') show(0);
+  else if (e.key === 'End') show(slides.length - 1);
+});
+let tx = null;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive: true});
+document.addEventListener('touchend', e => {
+  if (tx === null) return; const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 60) show(cur + (dx < 0 ? 1 : -1)); tx = null;
+});
+show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+</script>
+</body>
+</html>

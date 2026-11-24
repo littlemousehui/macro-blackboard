@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>消費與儲蓄</title>
+<style>
+:root{
+  --board:#24402f; --card:#24402f; --ink:#f4f1e6; --muted:#b8c6b6; --line:rgba(244,241,230,.32);
+  --accent:#ff9f8c; --accent-soft:rgba(255,226,120,.14); --blue:#8fd3f5; --green:#c3ec8e; --gray:#d0d0c8;
+  --yellow:#ffe27a; --pink:#ffb3c7; --wood1:#a8743f; --wood2:#6e4826; --frame:14px;
+  --note:#f7e27a; --note-ink:#3a2f05; --axis:#e9e6da;
+  --chalk-font:"Segoe UI","Microsoft JhengHei","微軟正黑體","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:#3b2a1a; color:var(--ink); font-family:var(--chalk-font);
+  line-height:1.65; overflow:hidden;
+  text-shadow:0 0 1px rgba(255,255,255,.45),0 0 8px rgba(255,255,255,.08);
+}
+/* wooden frame + board surface */
+#board{
+  position:fixed; inset:0; border:var(--frame) solid var(--wood2);
+  border-image:linear-gradient(135deg,var(--wood1),var(--wood2) 40%,var(--wood1) 70%,var(--wood2)) 1;
+  background-color:var(--board);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse 60% 40% at 25% 20%,rgba(255,255,255,.07),transparent 70%),
+    radial-gradient(ellipse 50% 30% at 75% 70%,rgba(255,255,255,.05),transparent 70%),
+    radial-gradient(ellipse 30% 18% at 60% 30%,rgba(255,255,255,.04),transparent 70%),
+    radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.35));
+  box-shadow:inset 0 0 40px rgba(0,0,0,.45);
+  z-index:0;
+}
+#progress{position:fixed;top:var(--frame);left:var(--frame);height:3px;background:var(--yellow);opacity:.8;transition:width .25s;z-index:5;filter:url(#chalk)}
+.slide{position:absolute;inset:var(--frame);bottom:calc(var(--frame) + 58px);display:none;overflow-y:auto;padding:36px 18px 28px;z-index:1}
+.slide.active{display:block;animation:write .45s ease}
+@keyframes write{from{opacity:0;filter:blur(2px)}to{opacity:1;filter:none}}
+.wrap{max-width:1360px;margin:0 auto}
+@media (min-width:1500px){p,li{font-size:23px}.formula{font-size:38px}}
+h1{font-size:clamp(36px,6vw,68px);line-height:1.2;margin:0 0 .3em;letter-spacing:.06em;filter:url(#chalk-soft)}
+h2{display:inline-block;font-size:clamp(26px,3.6vw,40px);line-height:1.3;margin:0 0 .7em;padding:0 .2em .15em;
+   border-bottom:3px solid var(--yellow);filter:url(#chalk-soft)}
+h3{font-size:clamp(19px,2.3vw,25px);margin:.2em 0 .4em;color:var(--yellow)}
+p,li{font-size:clamp(17px,2vw,22px)}
+ul,ol{padding-left:1.3em;margin:.3em 0}
+li{margin:.3em 0}
+li::marker{color:var(--yellow)}
+.kicker{color:var(--pink);font-weight:700;letter-spacing:.12em;font-size:clamp(15px,1.7vw,19px)}
+.muted{color:var(--muted)}
+.small{font-size:clamp(14px,1.5vw,16px)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.cols.wide-left{grid-template-columns:1.2fr 1fr}
+@media (max-width:760px){.cols,.cols.wide-left{grid-template-columns:1fr}}
+.card{background:rgba(255,255,255,.035);border:2px dashed rgba(244,241,230,.42);border-radius:14px 22px 12px 20px;padding:14px 20px}
+.big-q{font-size:clamp(24px,3.2vw,36px);font-weight:700;line-height:1.45}
+.hl{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.55);padding:0 .1em}
+/* sticky note pinned to the board */
+.note{position:relative;background:var(--note);color:var(--note-ink);text-shadow:none;border-radius:2px;
+  padding:14px 18px 12px;margin:20px 6px 4px;font-size:clamp(16px,1.8vw,20px);
+  box-shadow:3px 6px 14px rgba(0,0,0,.45);transform:rotate(-.8deg);
+  background-image:linear-gradient(transparent 0 85%,rgba(0,0,0,.05))}
+.note:nth-of-type(even){transform:rotate(.7deg)}
+.note::before{content:"📝 我的課堂筆記　";font-weight:700;color:#8a4b00}
+.note::after{content:"";position:absolute;top:-9px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#ff8a8a,#c0282d);box-shadow:1px 2px 3px rgba(0,0,0,.5)}
+.note i{color:inherit}
+.warn{border-left:4px solid var(--pink);background:rgba(255,179,199,.08);padding:10px 16px;border-radius:0 12px 12px 0;margin-top:14px}
+.formula{font-family:"Cambria Math","Times New Roman",serif;font-size:clamp(24px,3.2vw,36px);text-align:center;margin:.5em 0;white-space:nowrap;overflow-x:auto;color:#fffdf2;filter:url(#chalk-soft)}
+.formula i,.m i{font-style:italic}
+.m{font-family:"Cambria Math","Times New Roman",serif}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em;font-size:.9em}
+.frac>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .15em}
+.frac>span:last-child{padding:0 .15em}
+table{border-collapse:collapse;width:100%;font-size:clamp(15px,1.8vw,20px)}
+th,td{border:1.5px solid var(--line);padding:7px 10px;text-align:center}
+th{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.6)}
+.up{color:var(--green);font-weight:700}.down{color:var(--accent);font-weight:700}
+.chart{width:100%;height:auto;display:block;background:rgba(0,0,0,.08);border:2px dashed rgba(244,241,230,.25);border-radius:16px 10px 18px 12px}
+.chart .axis{stroke:var(--axis);stroke-width:2;filter:url(#chalk)}
+.chart .curve{fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;filter:url(#chalk)}
+.chart .dash{stroke-dasharray:8 7}
+.chart .guide{stroke:var(--gray);stroke-width:1.2;stroke-dasharray:4 5;opacity:.75}
+.chart .step{stroke:var(--yellow);stroke-width:2.4;fill:none;filter:url(#chalk)}
+.chart text{fill:var(--ink);font-size:15px;font-family:var(--chalk-font)}
+.chart text.lbl{font-weight:700}
+.chart text.tick{fill:var(--muted);font-size:13px}
+.chart .pt{stroke:var(--board);stroke-width:2}
+.bars .row{display:flex;align-items:center;gap:10px;margin:12px 0}
+.bars .name{width:7.5em;flex:none;font-size:clamp(15px,1.7vw,18px)}
+.bars .track{flex:1;display:flex;height:36px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.07);border:1.5px dashed var(--line)}
+.bars .seg{display:flex;align-items:center;justify-content:center;color:#17261c;font-weight:700;text-shadow:none;font-size:14px;white-space:nowrap;opacity:.92}
+.bars .total{width:4.2em;flex:none;font-weight:700;text-align:right;color:var(--yellow)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:15px;margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.flow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0}
+.flow .box{background:rgba(255,255,255,.035);border:2px solid var(--line);border-radius:16px 10px 18px 12px;padding:10px 14px;text-align:center;font-size:clamp(16px,1.9vw,20px)}
+.flow .box.in{border-color:var(--green)}.flow .box.out{border-color:var(--accent)}.flow .box.core{border-color:var(--blue);font-weight:700}
+.flow .arrow{font-size:28px;color:var(--yellow)}
+.icons{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:760px){.icons{grid-template-columns:repeat(2,1fr)}}
+.icon{border:2px dashed var(--line);border-radius:18px 12px 20px 10px;padding:12px;text-align:center}
+.icon .e{font-size:36px;text-shadow:none}
+.icon .s{font-family:"Cambria Math","Times New Roman",serif;font-size:30px;font-style:italic;font-weight:700;color:var(--yellow)}
+.title-slide{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 170px)}
+.corner{position:absolute;top:22px;right:28px;text-align:right;color:var(--muted);font-size:clamp(14px,1.6vw,18px);line-height:1.5;z-index:2}
+.corner b{color:var(--ink)}
+@media (max-width:700px){.corner{position:static;text-align:left;margin:0 auto 8px;max-width:1080px}}
+/* cover: two columns filling the whole board */
+.cover-grid{max-width:1500px;margin:0 auto;min-height:calc(100vh - 2*var(--frame) - 58px - 64px);
+  display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(24px,4vw,64px);align-items:center;padding:0 clamp(0px,2vw,32px)}
+.cover-left h1{font-size:clamp(44px,7vw,96px);margin:.1em 0 .25em}
+.cover-left .big-q{font-size:clamp(22px,2.8vw,38px)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:1.4em 0 1em}
+.chip{border:2px dashed var(--line);border-radius:999px;padding:6px 14px;font-size:clamp(14px,1.5vw,17px);color:var(--muted)}
+.chip b{color:var(--ink)}
+.hint{margin-top:1.6em}
+.cover-right{display:flex;flex-direction:column;gap:18px}
+.doodle{width:100%;border:2px dashed rgba(244,241,230,.25);border-radius:18px 12px 20px 10px;padding:12px;background:rgba(0,0,0,.08)}
+.agenda{border:2px solid rgba(255,226,122,.55);border-radius:14px 22px 12px 20px;padding:14px 20px;background:rgba(255,226,122,.05)}
+.agenda-title{color:var(--yellow);font-weight:700;font-size:clamp(17px,1.9vw,22px);margin-bottom:6px}
+.agenda ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.agenda li{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:clamp(15px,1.6vw,18px)}
+.agenda li small{display:block;color:var(--muted);font-size:.85em}
+.agenda .num{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--yellow);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:700;filter:url(#chalk-soft)}
+@media (max-width:860px){.cover-grid{grid-template-columns:1fr;min-height:0}.agenda ol{grid-template-columns:1fr}}
+.doodle path,.doodle line{fill:none;stroke-linecap:round;filter:url(#chalk)}
+/* chalk tray with nav */
+nav{position:fixed;left:var(--frame);right:var(--frame);bottom:var(--frame);height:58px;display:flex;align-items:center;justify-content:center;gap:14px;padding:0 16px;
+  background:linear-gradient(#8a5c30,#6a4322 60%,#553519);border-top:3px solid #b9864f;box-shadow:0 -4px 10px rgba(0,0,0,.35);z-index:4;text-shadow:none}
+nav .home{position:absolute;left:150px;bottom:12px;color:#f7ead2;text-decoration:none;font-weight:700;font-size:15px;padding:5px 12px;border:1.5px solid rgba(247,234,210,.5);border-radius:6px}
+nav .home:hover{background:rgba(255,255,255,.12)}
+@media (max-width:600px){nav .home{position:static;padding:5px 8px}}
+nav button{background:#f2efe6;color:#3a2a1a;border:none;border-radius:6px;padding:7px 16px;font-size:16px;cursor:pointer;font-family:var(--chalk-font);font-weight:700;
+  box-shadow:0 3px 0 #9d9584,0 4px 6px rgba(0,0,0,.35)}
+nav button:hover{background:#fff8d6}
+nav button:active{transform:translateY(2px);box-shadow:0 1px 0 #9d9584}
+#counter{min-width:5em;text-align:center;color:#f7ead2;font-variant-numeric:tabular-nums;font-weight:700}
+.sticks{position:absolute;left:22px;bottom:12px;display:flex;gap:8px;align-items:flex-end}
+.sticks i{display:block;width:46px;height:11px;border-radius:5px;box-shadow:0 2px 2px rgba(0,0,0,.35)}
+.sticks i:nth-child(1){background:#f6f4ec;transform:rotate(-4deg)}
+.sticks i:nth-child(2){background:#ffe27a;width:34px;transform:rotate(3deg)}
+.sticks i:nth-child(3){background:#ffb3c7;width:28px}
+.eraser{position:absolute;right:26px;bottom:10px;width:78px;height:24px;border-radius:4px;overflow:hidden;box-shadow:0 3px 4px rgba(0,0,0,.4);
+  background:linear-gradient(#3d5a80 0 55%,#d6d3c8 55%)}
+@media (max-width:600px){.sticks,.eraser{display:none}}
+@media print{
+  body{overflow:visible;background:var(--board)}
+  nav,#progress{display:none}
+  #board{position:fixed}
+  .slide{position:relative;inset:auto;display:block !important;page-break-after:always;min-height:100vh;animation:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- userSpaceOnUse region: straight axis lines have a zero-height bbox and would vanish otherwise -->
+  <filter id="chalk" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="chalk-soft" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+</svg>
+<div id="board"></div>
+<div id="progress"></div>
+
+<!-- 1 -->
+<section class="slide cover"><div class="cover-grid">
+  <div class="cover-left">
+    <div class="kicker">總體經濟學・第 14 章</div>
+    <h1>消費與儲蓄</h1>
+    <p class="big-q" style="font-weight:400">多拿到一塊錢，<br>你會花掉多少？</p>
+    <div class="chips">
+      <span class="chip">📅 今日主題：<b>消費與儲蓄</b></span>
+      <span class="chip">🧹 值日生：<b>你</b></span>
+      <span class="chip">⏱️ 20 頁・約 18 分鐘</span>
+      <span class="chip">✅ 可獨立閱讀</span>
+    </div>
+    <p class="muted small hint">← → 方向鍵或下方按鈕換頁　｜　內容整理自本知識庫 wiki：第14章 消費與儲蓄</p>
+  </div>
+  <div class="cover-right">
+    <svg class="doodle" viewBox="0 0 520 200" aria-hidden="true">
+      <line x1="20" y1="180" x2="392" y2="180" stroke="#f4f1e6" stroke-width="2.5"/>
+      <line x1="20" y1="180" x2="20" y2="8" stroke="#f4f1e6" stroke-width="2.5"/>
+      <path d="M24 110 L60 95 L80 120 L100 40 L115 105 L150 90 L170 125 L200 100 L215 30 L230 110 L270 95 L290 135 L310 85 L345 100 L360 150 L375 92 L390 100" stroke="#ff9f8c" stroke-width="3.5"/>
+      <path d="M24 108 C 120 98, 200 100, 260 102 S 350 100, 390 99" stroke="#ffe27a" stroke-width="4.5"/>
+      <text x="400" y="88" fill="#ff9f8c" font-size="18" font-family="Microsoft JhengHei,sans-serif">所得 ⚡</text>
+      <text x="400" y="122" fill="#ffe27a" font-size="18" font-family="Microsoft JhengHei,sans-serif">消費 🛒</text>
+      <text x="30" y="20" fill="#b8c6b6" font-size="14" font-family="Microsoft JhengHei,sans-serif">變動（示意）</text>
+      <text x="350" y="198" fill="#b8c6b6" font-size="14" font-family="Microsoft JhengHei,sans-serif">時間</text>
+    </svg>
+    <div class="agenda">
+      <div class="agenda-title">今天的課程</div>
+      <ol>
+        <li><span class="num">1</span><span><b>消費的特性</b><small>占 70%・很穩定</small></span></li>
+        <li><span class="num">2</span><span><b>凱因斯消費函數</b><small>MPC 是什麼</small></span></li>
+        <li><span class="num">3</span><span><b>生命週期與恆常所得</b><small>用一輩子規劃</small></span></li>
+        <li><span class="num">4</span><span><b>現代理論與現實</b><small>Hall・流動性限制</small></span></li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<!-- 2 -->
+<section class="slide"><div class="wrap">
+  <h2>消費券真的有用嗎？</h2>
+  <table>
+    <tr><th>地區</th><th>時間</th><th>做法</th><th>結果</th></tr>
+    <tr><td>🇭🇰 香港</td><td>2021 年 8 月起</td><td style="text-align:left">電子消費券每人港幣 5,000 元（約 640 美元），存進八達通或支付寶</td><td>？</td></tr>
+    <tr><td>🇰🇷 南韓</td><td>2020 年 5 月</td><td style="text-align:left">消費券</td><td style="text-align:left">只有 <b class="hl">36%</b> 家庭說自己多花了錢</td></tr>
+    <tr><td>🇹🇼 台灣</td><td>2009 年</td><td style="text-align:left">紙本消費券</td><td style="text-align:left">多數人買本來就會買的東西，只有約 <b class="hl">1/4</b> 用在計畫外消費</td></tr>
+  </table>
+  <p class="small muted">出處：The Economist, 2021-08-07</p>
+  <p class="big-q" style="text-align:center">香港人會用掉，還是放到過期？</p>
+  <div class="note">消費券。</div>
+</div></section>
+
+<!-- 3 -->
+<section class="slide"><div class="wrap">
+  <h2>今天要回答的問題</h2>
+  <p class="big-q" style="text-align:center">多拿到 1 元，你會花掉多少？<br><span class="hl">這就是「邊際消費傾向」（MPC）</span></p>
+  <div class="flow">
+    <div class="box">凱因斯<br>消費函數</div><div class="arrow">→</div>
+    <div class="box in">生命週期<br>理論</div><div class="arrow">→</div>
+    <div class="box in">恆常所得<br>理論</div><div class="arrow">→</div>
+    <div class="box core">Hall<br>隨機漫步</div>
+  </div>
+  <p style="text-align:center">四種理論的爭論，其實就是在吵：<b>MPC 到底有多大？</b></p>
+</div></section>
+
+<!-- 4 -->
+<section class="slide"><div class="wrap">
+  <h2>消費有多重要？</h2>
+  <div class="cols">
+    <div style="text-align:center">
+      <div style="font-size:clamp(90px,14vw,180px);font-weight:700;color:var(--yellow);line-height:1;filter:url(#chalk-soft)">70%</div>
+      <p class="big-q">消費約占總需求的七成</p>
+    </div>
+    <div>
+      <div class="card"><h3>📉 波動比 GDP 小</h3><p>經濟好壞時，消費的起伏（按比例）比 GDP 溫和。</p></div>
+      <div class="card" style="margin-top:14px"><h3>🧘 相對穩定</h3><p>這種「穩定」正是消費理論要解釋的現象。</p></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 5 -->
+<section class="slide"><div class="wrap">
+  <h2>消費不跟著所得暴衝</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-swing"></svg><p class="small muted" style="text-align:center">示意圖，非實際數據（仿 Figure 14-1：美國 1959–2012）</p></div>
+    <div>
+      <p>把每季的「人均所得變動」和「人均消費變動」畫在一起：</p>
+      <ul>
+        <li>持續 <b>5–10 年</b>的所得起伏 → 消費<span class="up">會跟著走</span></li>
+        <li>所得<b>短暫暴衝</b> → 消費<span class="down">幾乎不理會</span></li>
+      </ul>
+      <p class="big-q" style="font-size:clamp(19px,2.3vw,25px)">人好像會分辨：<br>這筆錢是<span class="hl">長期的</span>，還是<span class="hl">一次性的</span>？</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 6 -->
+<section class="slide"><div class="wrap">
+  <h2>本季消費 ≈ 上季消費</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-45"></svg><p class="small muted" style="text-align:center">示意（仿 Figure 14-2）</p></div>
+    <div>
+      <div class="formula"><i>C<sub>t</sub></i> = 85.35 + 1.0006 <i>C<sub>t</sub></i><sub>−1</sub></div>
+      <p>把「這一季的消費」對「上一季的消費」畫圖，點幾乎全部落在 <b>45 度線</b>上。</p>
+      <p class="big-q" style="font-size:clamp(19px,2.3vw,25px)">消費幾乎可以用<br><span class="hl">上一季的消費</span>預測</p>
+      <p class="muted">原因：現在花多少，和「預期未來會花多少」緊緊相連（第 15 頁再談）。</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 7 -->
+<section class="slide"><div class="wrap">
+  <h2>凱因斯：賺多少，花一定比例</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-keynes"></svg></div>
+    <div>
+      <div class="formula"><i>C</i> = <i>C̄</i> + <i>c</i>·<i>YD</i></div>
+      <ul>
+        <li><span class="m"><i>C̄</i></span>：自發性消費（沒收入也要花的）</li>
+        <li><span class="m"><i>c</i></span>：MPC，介於 0 和 1 之間</li>
+        <li><span class="m"><i>YD</i></span>：這一期的可支配所得</li>
+      </ul>
+      <p>早期凱因斯理論：<b>這一期花多少，看這一期賺多少</b>。</p>
+      <div class="warn small">盲點：不區分「一次性」和「長期」的所得。<br>🔣 這裡的小寫 <i>c</i> 是 MPC，和第 3 章的人均消費不同。</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 8 -->
+<section class="slide"><div class="wrap">
+  <h2>MPC 是什麼？為什麼吵翻天</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>💵 零用錢的例子</h3>
+      <p>這個月零用錢多了 100 元，你花掉 80、存下 20：</p>
+      <div class="formula" style="font-size:clamp(20px,2.6vw,30px)">MPC = <span class="frac"><span>Δ<i>C</i></span><span>Δ<i>Y</i></span></span> = <span class="frac"><span>80</span><span>100</span></span> = 0.8</div>
+      <p class="small muted">（例子為補充）</p>
+    </div>
+    <div class="card">
+      <h3>⚖️ 兩派看法</h3>
+      <table>
+        <tr><th>凱因斯模型</th><th>現代理論</th></tr>
+        <tr><td class="up">MPC 高</td><td class="down">MPC 低</td></tr>
+      </table>
+      <p style="margin-top:10px">MPC 決定發錢、減稅、消費券能刺激多少消費（補充）。</p>
+    </div>
+  </div>
+  <div class="note">marginal propensity to consume＝邊際消費傾向。</div>
+</div></section>
+
+<!-- 9 -->
+<section class="slide"><div class="wrap">
+  <h2>用一輩子來規劃消費</h2>
+  <div class="cols">
+    <div>
+      <p><b>生命週期理論</b>：人會在很長的期間規劃消費和儲蓄，想在<b>一生中</b>做最好的分配。</p>
+      <p>關鍵假設：<span class="hl">消費平滑化</span></p>
+      <ul>
+        <li>多數人喜歡穩定的生活方式</li>
+        <li>不喜歡消費每年大起大落</li>
+        <li>最簡單的版本：<b>每年花一樣多</b></li>
+      </ul>
+      <p>所以對「長期所得」「一次性所得」「財富」，會有<b>不同的 MPC</b>。</p>
+    </div>
+    <div class="card">
+      <h3>🍰 切蛋糕</h3>
+      <p>一生能吃的蛋糕就這麼大。與其年輕時一口吞掉、老了沒得吃，不如切成 60 等份，每年吃一片。</p>
+      <p class="small muted">（比喻為補充）</p>
+    </div>
+  </div>
+  <div class="note">消費平滑化。</div>
+</div></section>
+
+<!-- 10 -->
+<section class="slide"><div class="wrap">
+  <h2>例題：一輩子的帳</h2>
+  <p>假設某人 <b>20 歲</b>開始工作、<b>65 歲</b>退休、<b>80 歲</b>過世，每年勞動所得 <b>30,000</b>：</p>
+  <div class="flow">
+    <div class="box">① 工作年數<br><b>45 年</b></div><div class="arrow">→</div>
+    <div class="box">② 一生資源<br>30,000 × 45<br>＝<b>1,350,000</b></div><div class="arrow">→</div>
+    <div class="box">③ 一生年數<br><b>60 年</b></div><div class="arrow">→</div>
+    <div class="box core">④ 每年消費<br>1,350,000 ÷ 60<br>＝<b>22,500</b></div>
+  </div>
+  <div class="formula"><i>C</i> = <span class="frac"><span><i>WL</i></span><span><i>NL</i></span></span> × <i>YL</i></div>
+  <p style="text-align:center" class="small muted"><span class="m"><i>WL</i></span>＝工作年數　<span class="m"><i>NL</i></span>＝一生年數　<span class="m"><i>YL</i></span>＝每年勞動所得（🔣 <i>WL</i>、<i>NL</i> 是一個符號，不是相乘）</p>
+  <div class="note">NL＝從開始工作到死亡的時間。</div>
+</div></section>
+
+<!-- 11 -->
+<section class="slide"><div class="wrap">
+  <h2>儲蓄與財富的一生</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-life"></svg></div>
+    <div>
+      <p>有了消費理論，就有儲蓄理論：<span class="m"><i>S</i> = <i>Y</i> − <i>C</i></span></p>
+      <ul>
+        <li><b>工作期</b>：所得 &gt; 消費 → 存錢（圖中「儲蓄」）</li>
+        <li><b>退休期</b>：所得 = 0 &lt; 消費 → 動用存款（負儲蓄）</li>
+        <li>財富在<span class="hl">退休那年最高</span></li>
+        <li>財富在<span class="hl">過世時歸零</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="note">S = Y − C；工作期所得 &gt; 消費，退休期所得 &lt; 消費。</div>
+</div></section>
+
+<!-- 12 -->
+<section class="slide"><div class="wrap">
+  <h2>加薪 vs 年終獎金</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>📈 加薪：每年都多 3,000（恆常）</h3>
+      <div class="formula" style="font-size:clamp(18px,2.2vw,26px)">3,000 × <span class="frac"><span>45</span><span>60</span></span> = 2,250</div>
+      <p>MPC ＝ <span class="m"><i>WL</i>/<i>NL</i></span> ＝ 45/60 ＝ <b class="up">0.75</b></p>
+    </div>
+    <div class="card">
+      <h3>🧧 年終獎金：只多一次 3,000（暫時）</h3>
+      <div class="formula" style="font-size:clamp(18px,2.2vw,26px)">3,000 × <span class="frac"><span>1</span><span>60</span></span> = 50</div>
+      <p>MPC ＝ 1/<span class="m"><i>NL</i></span> ＝ 1/60 ≈ <b class="down">0.017</b></p>
+    </div>
+  </div>
+  <div class="bars">
+    <div class="row"><div class="name">加薪</div><div class="track"><div class="seg" style="width:75%;background:var(--green)">每年多花 2,250</div></div><div class="total">0.75</div></div>
+    <div class="row"><div class="name">年終獎金</div><div class="track"><div class="seg" style="width:1.7%;background:var(--accent)"></div></div><div class="total">0.017</div></div>
+  </div>
+  <p class="small muted">「加薪」「年終獎金」為補充例子。</p>
+  <div class="note">permanent income → MPC 大；transitory income（暫時性所得）→ MPC 小。</div>
+</div></section>
+
+<!-- 13 -->
+<section class="slide"><div class="wrap">
+  <h2>中了樂透會怎樣？</h2>
+  <div class="cols">
+    <div>
+      <p class="big-q" style="font-size:clamp(20px,2.6vw,30px)">財富的 MPC<br>＝ 暫時所得的 MPC</p>
+      <p>為什麼？因為一筆財富也會<b>攤到剩下的人生</b>慢慢花。</p>
+      <p>這個 MPC 可以用來把<b>資產價值的變化</b>（股價、房價）連到現在的消費。</p>
+      <div class="warn small">⚠️ 例題的 1/60 是用 20 歲算的。嚴格來說是「1 ÷ 剩餘年數」，<b>年紀愈大，MPC 愈高</b>（補充）。</div>
+    </div>
+    <div class="card">
+      <h3>🎰 樂透獎金切成小份</h3>
+      <p>中了一大筆錢，不會一次花光，而是切成很多小份，餘生每年多花一點。</p>
+      <p class="small muted">（比喻為補充）</p>
+    </div>
+  </div>
+  <div class="note">一次性財富增加；平滑原則，不會一次花掉。</div>
+</div></section>
+
+<!-- 14 -->
+<section class="slide"><div class="wrap">
+  <h2>Friedman 的恆常所得理論</h2>
+  <div class="formula" style="font-size:clamp(28px,4vw,48px)"><i>C</i> = <i>c</i> · <i>YP</i></div>
+  <div class="cols">
+    <div class="card">
+      <h3>恆常所得 <span class="m"><i>YP</i></span> 是什麼？</h3>
+      <p>在目前的財富、現在和未來的所得給定下，<b>這輩子可以一直維持的穩定支出水準</b>。</p>
+    </div>
+    <div class="card">
+      <h3>和生命週期理論的關係</h3>
+      <p>都說：消費<b>不看這一期賺多少</b>，而看<b>長期</b>能賺多少。<br>兩者合稱 <b>PILCH</b>（恆常所得－生命週期假說）。</p>
+    </div>
+  </div>
+  <div class="note">恆常可支配所得。</div>
+</div></section>
+
+<!-- 15 -->
+<section class="slide"><div class="wrap">
+  <h2>Hall：消費只因驚喜而改變</h2>
+  <div class="formula" style="font-size:clamp(26px,3.6vw,44px)"><i>C</i><sub><i>t</i>+1</sub> = <i>C<sub>t</sub></i> + <i>ε</i></div>
+  <p style="text-align:center">明天的消費 ＝ 今天的消費 ＋ <b>真正隨機的誤差</b> <span class="m"><i>ε</i></span></p>
+  <div class="cols">
+    <div class="card"><h3>📅 預料中的加薪</h3><p>早就知道明年會加薪 → 今年已經照「加薪後的收入」在花 → 明年真的加薪時，消費<b>不會再跳</b>。</p></div>
+    <div class="card"><h3>🎁 意外的升遷或裁員</h3><p>沒料到的事才會改變你對長期所得的估計 → 消費<b>才會改變</b>。</p></div>
+  </div>
+  <p class="small muted">例子為補充。傳統 PILCH：恆常所得已知就永遠不變；Hall 的版本加入了「所得不確定」。</p>
+  <div class="note">傳統 PILCH 每期消費水準都相同。</div>
+</div></section>
+
+<!-- 16 -->
+<section class="slide"><div class="wrap">
+  <h2>為什麼理論只對一半？</h2>
+  <p>PILCH 大約只能解釋<b>一半</b>的消費行為，兩個原因：</p>
+  <div class="cols">
+    <div class="card">
+      <h3>🔒 流動性限制</h3>
+      <p>預期未來收入會變高，但<b>現在借不到錢</b>。</p>
+      <p>→ 沒辦法照理論預測的較高水準消費<br>→ 消費更緊跟著<b>當期所得</b></p>
+      <p class="small muted">例：剛出社會、前景看好但借不到錢的年輕人（補充）</p>
+    </div>
+    <div class="card">
+      <h3>👓 短視</h3>
+      <p>消費者<b>沒有</b>理論假設的那麼會為未來打算。</p>
+    </div>
+  </div>
+  <div class="note">流動性限制；短視。</div>
+</div></section>
+
+<!-- 17 -->
+<section class="slide"><div class="wrap">
+  <h2>為什麼老人不花光存款？</h2>
+  <p>生命週期理論說「退休後花光存款」，但現實中<b>老年人很少動用存款</b>，多半靠利息、股利生活。因為還有其他儲蓄動機：</p>
+  <div class="cols">
+    <div class="card"><h3>👨‍👩‍👧 留遺產</h3><p>存錢留給子女：可能是<b>利他動機</b>，也可能是<b>策略動機</b>。</p></div>
+    <div class="card"><h3>🏥 預防性儲蓄</h3><p>防範意外事件，例如<b>醫療費用</b>。不確定愈大，存得愈多。</p></div>
+  </div>
+  <div class="note">緩衝儲備儲蓄；留遺產。</div>
+</div></section>
+
+<!-- 18 -->
+<section class="slide"><div class="wrap">
+  <h2>總整理：四種消費理論</h2>
+  <table>
+    <tr><th>理論</th><th>消費取決於</th><th>式子</th><th>MPC</th></tr>
+    <tr><td>凱因斯消費函數</td><td>這一期的所得</td><td><span class="m"><i>C</i> = <i>C̄</i> + <i>c</i>·<i>YD</i></span></td><td class="up">單一、高</td></tr>
+    <tr><td>生命週期理論</td><td>一生的資源</td><td><span class="m"><i>C</i> = (<i>WL</i>/<i>NL</i>)·<i>YL</i></span></td><td>恆常 0.75／暫時 0.017</td></tr>
+    <tr><td>恆常所得理論（Friedman）</td><td>恆常所得</td><td><span class="m"><i>C</i> = <i>c</i>·<i>YP</i></span></td><td>對恆常所得</td></tr>
+    <tr><td>隨機漫步（Hall）</td><td>上期消費＋意外</td><td><span class="m"><i>C</i><sub>t+1</sub> = <i>C</i><sub>t</sub> + <i>ε</i></span></td><td>只對意外反應</td></tr>
+  </table>
+  <div class="cols" style="margin-top:14px">
+    <div class="card"><b>凱因斯：</b>賺多少，花一定比例。</div>
+    <div class="card"><b>生命週期／恆常所得：</b>看一輩子能賺多少，再平均花。<b>Hall：</b>只因驚喜而改變。</div>
+  </div>
+</div></section>
+
+<!-- 19 -->
+<section class="slide"><div class="wrap">
+  <h2>回到消費券：理論怎麼說？</h2>
+  <table>
+    <tr><th>理論</th><th>消費券是什麼</th><th>預測效果</th></tr>
+    <tr><td>凱因斯</td><td>當期所得增加</td><td class="up">大（MPC 高）</td></tr>
+    <tr><td>生命週期／恆常所得</td><td><b>一次性</b>的暫時所得</td><td class="down">小（MPC ≈ 0.017）</td></tr>
+    <tr><td>流動性限制</td><td>借不到錢家庭的救急錢</td><td class="up">這群人效果較大</td></tr>
+  </table>
+  <div class="cols" style="margin-top:14px">
+    <div class="card">還有一件事：如果你本來就會花這筆錢，消費券只是<b>替代</b>了原本的現金，總消費不一定增加。</div>
+    <div class="card">實證：台灣只有約 <b>1/4</b> 用在計畫外消費、南韓只有 <b>36%</b> 家庭多花錢 → <span class="hl">比較接近 PILCH 的預測</span>。</div>
+  </div>
+  <p class="small muted">本頁的理論分析為推論，非簡報原文。</p>
+</div></section>
+
+<!-- 20 -->
+<section class="slide"><div class="wrap">
+  <h2>重點回顧＋常見誤解</h2>
+  <div class="cols">
+    <div>
+      <h3>五個重點</h3>
+      <ol>
+        <li>消費占總需求約 70%，而且比 GDP 穩定</li>
+        <li>凱因斯：消費看當期所得，只有一個 MPC，而且偏高</li>
+        <li>生命週期：恆常所得 MPC 大（0.75），暫時所得 MPC 小（0.017）</li>
+        <li>Hall：消費只因「意外」而改變</li>
+        <li>流動性限制、短視、遺產與預防，讓現實偏離理論</li>
+      </ol>
+    </div>
+    <div>
+      <h3>常見誤解</h3>
+      <ul>
+        <li>❌ MPC 是固定的一個數</li>
+        <li>❌ 現代理論說人拿到錢什麼都不花</li>
+        <li>❌ 財富的 MPC 和恆常所得一樣大</li>
+        <li>❌ 發消費券一定能刺激消費</li>
+      </ul>
+      <p class="small muted">想深入看：wiki 的「生命週期理論」「消費理論比較」「消費券」頁</p>
+    </div>
+  </div>
+</div></section>
+
+<nav>
+  <span class="sticks" aria-hidden="true"><i></i><i></i><i></i></span>
+  <span class="eraser" aria-hidden="true"></span>
+  <a class="home" href="../index.html" aria-label="回到單元首頁">🏠 首頁</a>
+  <button id="prev" aria-label="上一頁">← 上一頁</button>
+  <span id="counter"></span>
+  <button id="next" aria-label="下一頁">下一頁 →</button>
+</nav>
+
+<script>
+// ---------- chart helper (inline SVG, no libraries) ----------
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function chart(id, cfg){
+  const svg = document.getElementById(id); if (!svg) return;
+  const W = cfg.w || 520, H = cfg.h || 360, L = 46, R = cfg.right || 92, T = 18, B = 40;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const x0 = cfg.xmin || 0, x1 = cfg.xmax || 1, y0 = cfg.ymin || 0, y1 = cfg.ymax || 1;
+  const X = x => L + (x - x0) / (x1 - x0) * (W - L - R);
+  const Y = y => H - B - (y - y0) / (y1 - y0) * (H - T - B);
+  const defs = el('defs', {}, svg);
+  const mk = el('marker', {id: id + '-arr', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse'}, defs);
+  el('path', {d: 'M0,0 L10,5 L0,10 z', fill: 'var(--accent)'}, mk);
+  // axes
+  el('line', {x1: L, y1: H - B, x2: W - R + 20, y2: H - B, class: 'axis'}, svg);
+  el('line', {x1: L, y1: T - 4, x2: L, y2: H - B, class: 'axis'}, svg);
+  if (cfg.xlabel) el('text', {x: W - R + 24, y: H - B + 5, class: 'lbl'}, svg, cfg.xlabel);
+  if (cfg.ylabel) el('text', {x: L - 8, y: T - 4, 'text-anchor': 'end', class: 'lbl'}, svg, cfg.ylabel);
+  (cfg.xticks || []).forEach(t => el('text', {x: X(t[0]), y: H - B + 18, 'text-anchor': 'middle', class: 'tick'}, svg, t[1]));
+  (cfg.yticks || []).forEach(t => el('text', {x: L - 6, y: Y(t[0]) + 4, 'text-anchor': 'end', class: 'tick'}, svg, t[1]));
+  (cfg.guides || []).forEach(g => el('line', {x1: X(g[0]), y1: Y(g[1]), x2: X(g[2]), y2: Y(g[3]), class: 'guide'}, svg));
+  (cfg.curves || []).forEach(c => {
+    const a = c.from !== undefined ? c.from : x0, b = c.to !== undefined ? c.to : x1, pts = [];
+    for (let i = 0; i <= 160; i++){ const x = a + (b - a) * i / 160, y = c.fn(x); if (y <= y1 * 1.01) pts.push(X(x).toFixed(1) + ',' + Y(y).toFixed(1)); }
+    el('polyline', {points: pts.join(' '), class: 'curve' + (c.dash ? ' dash' : ''), style: `stroke:var(--${c.color})`}, svg);
+    if (c.label){
+      const lx = c.lx !== undefined ? c.lx : b;
+      el('text', {x: X(lx) + 6, y: Y(c.fn(lx)) + 5 + (c.dy || 0), class: 'lbl', style: `fill:var(--${c.color})`}, svg, c.label);
+    }
+  });
+  (cfg.data || []).forEach(d => {
+    el('polyline', {points: d.pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' '), class: 'curve', style: `stroke:var(--${d.color})`}, svg);
+  });
+  (cfg.segs || []).forEach(s => el('line', {x1: X(s[0]), y1: Y(s[1]), x2: X(s[2]), y2: Y(s[3]), class: s[4] || 'step'}, svg));
+  (cfg.arrows || []).forEach(a => el('line', {x1: X(a[0]), y1: Y(a[1]), x2: X(a[2]), y2: Y(a[3]), stroke: 'var(--accent)', 'stroke-width': 2.5, 'marker-end': `url(#${id}-arr)`}, svg));
+  (cfg.points || []).forEach(p => {
+    el('circle', {cx: X(p[0]), cy: Y(p[1]), r: 5, class: 'pt', style: 'fill:var(--ink)'}, svg);
+    if (p[2]) el('text', {x: X(p[0]) + (p[3] || 8), y: Y(p[1]) + (p[4] || -8), class: 'lbl'}, svg, p[2]);
+  });
+  (cfg.texts || []).forEach(t => el('text', {x: X(t[0]), y: Y(t[1]), 'text-anchor': t[3] || 'start', class: t[4] || '', style: t[5] || ''}, svg, t[2]));
+}
+
+// ---------- chapter 14 charts (illustrative, not actual data) ----------
+const bump = (t, c, h, w) => h * Math.exp(-((t - c) * (t - c)) / (2 * w * w));
+const swingBase = t => 0.5 + 0.28 * Math.sin(t / 5.5);
+const income = t => swingBase(t) + 0.08 * Math.sin(t * 2.3) + bump(t, 9, .55, .35) + bump(t, 24, .7, .35) + bump(t, 37, -.6, .35);
+const consumption = t => swingBase(t) * 0.92 + 0.04;
+chart('c-swing', {
+  xmax: 46, ymin: -0.2, ymax: 1.4, xlabel: '時間', ylabel: '變動', right: 70,
+  curves: [
+    {fn: income, color: 'accent', label: '所得', to: 46, dy: -14},
+    {fn: consumption, color: 'yellow', label: '消費', to: 46, dy: 20}
+  ],
+  texts: [[24, 1.32, '暴衝', 'middle', 'tick'], [37, -.12, '驟降', 'middle', 'tick']]
+});
+
+const pts45 = [];
+for (let i = 0; i < 26; i++) { const x = 0.32 + i * 0.024; pts45.push([x, x * 1.0006 + 0.004 * Math.sin(i * 1.7)]); }
+chart('c-45', {
+  xmax: 1, ymax: 1, xlabel: '上季消費', ylabel: '本季消費', right: 30,
+  curves: [{fn: x => x, color: 'blue', label: '45° 線', lx: .9, dy: 22, to: 1}],
+  points: pts45
+});
+document.querySelectorAll('#c-45 circle').forEach(c => { c.setAttribute('r', 4); c.style.fill = 'var(--yellow)'; });
+
+chart('c-keynes', {
+  xmax: 1, ymax: 1, xlabel: 'YD', ylabel: 'C', right: 110,
+  curves: [{fn: x => 0.15 + 0.7 * x, color: 'yellow', label: 'C = C̄ + c·YD', to: 1}],
+  segs: [[.5, .5, .7, .5, 'guide'], [.7, .5, .7, .64, '']],
+  texts: [[.72, .56, '斜率 = c（MPC）', 'start', 'tick'], [.02, .19, 'C̄', 'start', 'lbl']]
+});
+
+// life cycle: income YL until WL (=45), consumption flat, assets rise to WL then fall to 0 at NL (=60)
+const WL = 45, NL = 60, YLv = 1, Cv = YLv * WL / NL;
+const assets = t => t <= WL ? 1.55 * t / WL : 1.55 * (NL - t) / (NL - WL);
+chart('c-life', {
+  xmax: 62, ymax: 1.7, xlabel: '時間', right: 70,
+  curves: [{fn: assets, color: 'blue', label: '資產', from: 0, to: NL, lx: 51, dy: -6}],
+  segs: [[0, YLv, WL, YLv, 'step'], [WL, 0.004, NL, 0.004, 'step'], [0, Cv, NL, Cv, 'cline'], [WL, 0, WL, 1.6, 'guide']],
+  xticks: [[WL, 'WL（65 歲）'], [NL, 'NL（80 歲）']],
+  yticks: [[YLv, 'YL'], [Cv, 'C'], [1.55, 'WR max']],
+  texts: [[22, .86, '儲蓄', 'middle', 'lbl', 'fill:var(--green)'], [52.5, .36, '負儲蓄', 'middle', 'lbl', 'fill:var(--accent)']]
+});
+document.querySelectorAll('#c-life line.cline').forEach(l => { l.setAttribute('stroke', 'var(--pink)'); l.setAttribute('stroke-width', 3.4); });
+
+// make highlighted segments (class '') visible
+document.querySelectorAll('svg.chart line').forEach(l => { if (l.getAttribute('class') === '') { l.setAttribute('stroke', 'var(--yellow)'); l.setAttribute('stroke-width', 4); } });
+
+// ---------- slide navigation ----------
+const slides = [...document.querySelectorAll('.slide')];
+const counter = document.getElementById('counter'), bar = document.getElementById('progress');
+let cur = 0;
+function show(i){
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+  slides[cur].scrollTop = 0;
+  counter.textContent = (cur + 1) + ' / ' + slides.length;
+  bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+  if (location.hash !== '#' + (cur + 1)) history.replaceState(null, '', '#' + (cur + 1));
+}
+document.getElementById('prev').onclick = () => show(cur - 1);
+document.getElementById('next').onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','PageDown',' ','Enter'].includes(e.key)) { e.preventDefault(); show(cur + 1); }
+  else if (['ArrowLeft','PageUp','Backspace'].includes(e.key)) { e.preventDefault(); show(cur - 1); }
+  else if (e.key === 'Home') show(0);
+  else if (e.key === 'End') show(slides.length - 1);
+});
+let tx = null;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive: true});
+document.addEventListener('touchend', e => {
+  if (tx === null) return; const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 60) show(cur + (dx < 0 ? 1 : -1)); tx = null;
+});
+show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+</script>
+</body>
+</html>

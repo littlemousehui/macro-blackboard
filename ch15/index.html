@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>投資支出</title>
+<style>
+:root{
+  --board:#24402f; --card:#24402f; --ink:#f4f1e6; --muted:#b8c6b6; --line:rgba(244,241,230,.32);
+  --accent:#ff9f8c; --accent-soft:rgba(255,226,120,.14); --blue:#8fd3f5; --green:#c3ec8e; --gray:#d0d0c8;
+  --yellow:#ffe27a; --pink:#ffb3c7; --wood1:#a8743f; --wood2:#6e4826; --frame:14px;
+  --note:#f7e27a; --note-ink:#3a2f05; --axis:#e9e6da;
+  --chalk-font:"Segoe UI","Microsoft JhengHei","微軟正黑體","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:#3b2a1a; color:var(--ink); font-family:var(--chalk-font);
+  line-height:1.65; overflow:hidden;
+  text-shadow:0 0 1px rgba(255,255,255,.45),0 0 8px rgba(255,255,255,.08);
+}
+/* wooden frame + board surface */
+#board{
+  position:fixed; inset:0; border:var(--frame) solid var(--wood2);
+  border-image:linear-gradient(135deg,var(--wood1),var(--wood2) 40%,var(--wood1) 70%,var(--wood2)) 1;
+  background-color:var(--board);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse 60% 40% at 25% 20%,rgba(255,255,255,.07),transparent 70%),
+    radial-gradient(ellipse 50% 30% at 75% 70%,rgba(255,255,255,.05),transparent 70%),
+    radial-gradient(ellipse 30% 18% at 60% 30%,rgba(255,255,255,.04),transparent 70%),
+    radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.35));
+  box-shadow:inset 0 0 40px rgba(0,0,0,.45);
+  z-index:0;
+}
+#progress{position:fixed;top:var(--frame);left:var(--frame);height:3px;background:var(--yellow);opacity:.8;transition:width .25s;z-index:5;filter:url(#chalk)}
+.slide{position:absolute;inset:var(--frame);bottom:calc(var(--frame) + 58px);display:none;overflow-y:auto;padding:36px 18px 28px;z-index:1}
+.slide.active{display:block;animation:write .45s ease}
+@keyframes write{from{opacity:0;filter:blur(2px)}to{opacity:1;filter:none}}
+.wrap{max-width:1360px;margin:0 auto}
+@media (min-width:1500px){p,li{font-size:23px}.formula{font-size:38px}}
+h1{font-size:clamp(36px,6vw,68px);line-height:1.2;margin:0 0 .3em;letter-spacing:.06em;filter:url(#chalk-soft)}
+h2{display:inline-block;font-size:clamp(26px,3.6vw,40px);line-height:1.3;margin:0 0 .7em;padding:0 .2em .15em;
+   border-bottom:3px solid var(--yellow);filter:url(#chalk-soft)}
+h3{font-size:clamp(19px,2.3vw,25px);margin:.2em 0 .4em;color:var(--yellow)}
+p,li{font-size:clamp(17px,2vw,22px)}
+ul,ol{padding-left:1.3em;margin:.3em 0}
+li{margin:.3em 0}
+li::marker{color:var(--yellow)}
+.kicker{color:var(--pink);font-weight:700;letter-spacing:.12em;font-size:clamp(15px,1.7vw,19px)}
+.muted{color:var(--muted)}
+.small{font-size:clamp(14px,1.5vw,16px)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.cols.wide-left{grid-template-columns:1.2fr 1fr}
+@media (max-width:760px){.cols,.cols.wide-left{grid-template-columns:1fr}}
+.card{background:rgba(255,255,255,.035);border:2px dashed rgba(244,241,230,.42);border-radius:14px 22px 12px 20px;padding:14px 20px}
+.big-q{font-size:clamp(24px,3.2vw,36px);font-weight:700;line-height:1.45}
+.hl{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.55);padding:0 .1em}
+/* sticky note pinned to the board */
+.note{position:relative;background:var(--note);color:var(--note-ink);text-shadow:none;border-radius:2px;
+  padding:14px 18px 12px;margin:20px 6px 4px;font-size:clamp(16px,1.8vw,20px);
+  box-shadow:3px 6px 14px rgba(0,0,0,.45);transform:rotate(-.8deg);
+  background-image:linear-gradient(transparent 0 85%,rgba(0,0,0,.05))}
+.note:nth-of-type(even){transform:rotate(.7deg)}
+.note::before{content:"📝 我的課堂筆記　";font-weight:700;color:#8a4b00}
+.note::after{content:"";position:absolute;top:-9px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#ff8a8a,#c0282d);box-shadow:1px 2px 3px rgba(0,0,0,.5)}
+.note i{color:inherit}
+.warn{border-left:4px solid var(--pink);background:rgba(255,179,199,.08);padding:10px 16px;border-radius:0 12px 12px 0;margin-top:14px}
+.formula{font-family:"Cambria Math","Times New Roman",serif;font-size:clamp(24px,3.2vw,36px);text-align:center;margin:.5em 0;white-space:nowrap;overflow-x:auto;color:#fffdf2;filter:url(#chalk-soft)}
+.formula i,.m i{font-style:italic}
+.m{font-family:"Cambria Math","Times New Roman",serif}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em;font-size:.9em}
+.frac>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .15em}
+.frac>span:last-child{padding:0 .15em}
+table{border-collapse:collapse;width:100%;font-size:clamp(15px,1.8vw,20px)}
+th,td{border:1.5px solid var(--line);padding:7px 10px;text-align:center}
+th{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.6)}
+.up{color:var(--green);font-weight:700}.down{color:var(--accent);font-weight:700}
+.chart{width:100%;height:auto;display:block;background:rgba(0,0,0,.08);border:2px dashed rgba(244,241,230,.25);border-radius:16px 10px 18px 12px}
+.chart .axis{stroke:var(--axis);stroke-width:2;filter:url(#chalk)}
+.chart .curve{fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;filter:url(#chalk)}
+.chart .dash{stroke-dasharray:8 7}
+.chart .guide{stroke:var(--gray);stroke-width:1.2;stroke-dasharray:4 5;opacity:.75}
+.chart .step{stroke:var(--yellow);stroke-width:2.4;fill:none;filter:url(#chalk)}
+.chart text{fill:var(--ink);font-size:15px;font-family:var(--chalk-font)}
+.chart text.lbl{font-weight:700}
+.chart text.tick{fill:var(--muted);font-size:13px}
+.chart .pt{stroke:var(--board);stroke-width:2}
+.bars .row{display:flex;align-items:center;gap:10px;margin:12px 0}
+.bars .name{width:7.5em;flex:none;font-size:clamp(15px,1.7vw,18px)}
+.bars .track{flex:1;display:flex;height:36px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.07);border:1.5px dashed var(--line)}
+.bars .seg{display:flex;align-items:center;justify-content:center;color:#17261c;font-weight:700;text-shadow:none;font-size:14px;white-space:nowrap;opacity:.92}
+.bars .total{width:4.2em;flex:none;font-weight:700;text-align:right;color:var(--yellow)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:15px;margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.flow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0}
+.flow .box{background:rgba(255,255,255,.035);border:2px solid var(--line);border-radius:16px 10px 18px 12px;padding:10px 14px;text-align:center;font-size:clamp(16px,1.9vw,20px)}
+.flow .box.in{border-color:var(--green)}.flow .box.out{border-color:var(--accent)}.flow .box.core{border-color:var(--blue);font-weight:700}
+.flow .arrow{font-size:28px;color:var(--yellow)}
+.icons{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:760px){.icons{grid-template-columns:repeat(2,1fr)}}
+.icon{border:2px dashed var(--line);border-radius:18px 12px 20px 10px;padding:12px;text-align:center}
+.icon .e{font-size:36px;text-shadow:none}
+.icon .s{font-family:"Cambria Math","Times New Roman",serif;font-size:30px;font-style:italic;font-weight:700;color:var(--yellow)}
+.icons.bignums{grid-template-columns:repeat(3,1fr)}
+@media (max-width:760px){.icons.bignums{grid-template-columns:1fr}}
+.title-slide{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 170px)}
+.corner{position:absolute;top:22px;right:28px;text-align:right;color:var(--muted);font-size:clamp(14px,1.6vw,18px);line-height:1.5;z-index:2}
+.corner b{color:var(--ink)}
+@media (max-width:700px){.corner{position:static;text-align:left;margin:0 auto 8px;max-width:1080px}}
+/* cover: two columns filling the whole board */
+.cover-grid{max-width:1500px;margin:0 auto;min-height:calc(100vh - 2*var(--frame) - 58px - 64px);
+  display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(24px,4vw,64px);align-items:center;padding:0 clamp(0px,2vw,32px)}
+.cover-left h1{font-size:clamp(44px,7vw,96px);margin:.1em 0 .25em}
+.cover-left .big-q{font-size:clamp(22px,2.8vw,38px)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:1.4em 0 1em}
+.chip{border:2px dashed var(--line);border-radius:999px;padding:6px 14px;font-size:clamp(14px,1.5vw,17px);color:var(--muted)}
+.chip b{color:var(--ink)}
+.hint{margin-top:1.6em}
+.cover-right{display:flex;flex-direction:column;gap:18px}
+.doodle{width:100%;border:2px dashed rgba(244,241,230,.25);border-radius:18px 12px 20px 10px;padding:12px;background:rgba(0,0,0,.08)}
+.agenda{border:2px solid rgba(255,226,122,.55);border-radius:14px 22px 12px 20px;padding:14px 20px;background:rgba(255,226,122,.05)}
+.agenda-title{color:var(--yellow);font-weight:700;font-size:clamp(17px,1.9vw,22px);margin-bottom:6px}
+.agenda ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.agenda li{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:clamp(15px,1.6vw,18px)}
+.agenda li small{display:block;color:var(--muted);font-size:.85em}
+.agenda .num{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--yellow);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:700;filter:url(#chalk-soft)}
+@media (max-width:860px){.cover-grid{grid-template-columns:1fr;min-height:0}.agenda ol{grid-template-columns:1fr}}
+.doodle path,.doodle line{fill:none;stroke-linecap:round;filter:url(#chalk)}
+/* chalk tray with nav */
+nav{position:fixed;left:var(--frame);right:var(--frame);bottom:var(--frame);height:58px;display:flex;align-items:center;justify-content:center;gap:14px;padding:0 16px;
+  background:linear-gradient(#8a5c30,#6a4322 60%,#553519);border-top:3px solid #b9864f;box-shadow:0 -4px 10px rgba(0,0,0,.35);z-index:4;text-shadow:none}
+nav .home{position:absolute;left:150px;bottom:12px;color:#f7ead2;text-decoration:none;font-weight:700;font-size:15px;padding:5px 12px;border:1.5px solid rgba(247,234,210,.5);border-radius:6px}
+nav .home:hover{background:rgba(255,255,255,.12)}
+@media (max-width:600px){nav .home{position:static;padding:5px 8px}}
+nav button{background:#f2efe6;color:#3a2a1a;border:none;border-radius:6px;padding:7px 16px;font-size:16px;cursor:pointer;font-family:var(--chalk-font);font-weight:700;
+  box-shadow:0 3px 0 #9d9584,0 4px 6px rgba(0,0,0,.35)}
+nav button:hover{background:#fff8d6}
+nav button:active{transform:translateY(2px);box-shadow:0 1px 0 #9d9584}
+#counter{min-width:5em;text-align:center;color:#f7ead2;font-variant-numeric:tabular-nums;font-weight:700}
+.sticks{position:absolute;left:22px;bottom:12px;display:flex;gap:8px;align-items:flex-end}
+.sticks i{display:block;width:46px;height:11px;border-radius:5px;box-shadow:0 2px 2px rgba(0,0,0,.35)}
+.sticks i:nth-child(1){background:#f6f4ec;transform:rotate(-4deg)}
+.sticks i:nth-child(2){background:#ffe27a;width:34px;transform:rotate(3deg)}
+.sticks i:nth-child(3){background:#ffb3c7;width:28px}
+.eraser{position:absolute;right:26px;bottom:10px;width:78px;height:24px;border-radius:4px;overflow:hidden;box-shadow:0 3px 4px rgba(0,0,0,.4);
+  background:linear-gradient(#3d5a80 0 55%,#d6d3c8 55%)}
+@media (max-width:600px){.sticks,.eraser{display:none}}
+@media print{
+  body{overflow:visible;background:var(--board)}
+  nav,#progress{display:none}
+  #board{position:fixed}
+  .slide{position:relative;inset:auto;display:block !important;page-break-after:always;min-height:100vh;animation:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- userSpaceOnUse region: straight axis lines have a zero-height bbox and would vanish otherwise -->
+  <filter id="chalk" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="chalk-soft" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+</svg>
+<div id="board"></div>
+<div id="progress"></div>
+
+<!-- 1 -->
+<section class="slide cover"><div class="cover-grid">
+  <div class="cover-left">
+    <div class="kicker">總體經濟學・第 15 章</div>
+    <h1>投資支出</h1>
+    <p class="big-q" style="font-weight:400">企業決定投資多少，<br>看的是什麼？</p>
+    <div class="chips">
+      <span class="chip">📅 今日主題：<b>投資支出</b></span>
+      <span class="chip">🧹 值日生：<b>你</b></span>
+      <span class="chip">⏱️ 19 頁・約 18 分鐘</span>
+      <span class="chip">📚 建議先看：<b>第 13 章</b></span>
+    </div>
+    <p class="muted small hint">← → 方向鍵或下方按鈕換頁　｜　內容整理自本知識庫 wiki：第15章 投資支出</p>
+  </div>
+  <div class="cover-right">
+    <svg class="doodle" viewBox="0 0 520 200" aria-hidden="true">
+      <line x1="20" y1="180" x2="500" y2="180" stroke="#f4f1e6" stroke-width="2.5"/>
+      <path d="M40 180 L40 110 L90 85 L90 110 L140 85 L140 110 L190 85 L190 180" stroke="#8fd3f5" stroke-width="3.5" fill="none"/>
+      <line x1="160" y1="85" x2="160" y2="40" stroke="#8fd3f5" stroke-width="3.5"/>
+      <path d="M152 38 C 158 25, 168 30, 172 18" stroke="#b8c6b6" stroke-width="2.5" fill="none"/>
+      <rect x="260" y="140" width="34" height="40" stroke="#ffe27a" stroke-width="3" fill="none"/>
+      <rect x="310" y="115" width="34" height="65" stroke="#ffe27a" stroke-width="3" fill="none"/>
+      <rect x="360" y="85" width="34" height="95" stroke="#ffe27a" stroke-width="3" fill="none"/>
+      <rect x="410" y="45" width="34" height="135" stroke="#ffe27a" stroke-width="3" fill="none"/>
+      <path d="M255 125 C 320 105, 380 70, 455 28" stroke="#ff9f8c" stroke-width="3.5" fill="none"/>
+      <path d="M445 26 L458 26 L452 38" stroke="#ff9f8c" stroke-width="3.5" fill="none"/>
+      <text x="115" y="200" text-anchor="middle" fill="#8fd3f5" font-size="16" font-family="Microsoft JhengHei,sans-serif">晶圓廠 🏭</text>
+      <text x="352" y="200" text-anchor="middle" fill="#ffe27a" font-size="16" font-family="Microsoft JhengHei,sans-serif">投資 📈</text>
+    </svg>
+    <div class="agenda">
+      <div class="agenda-title">今天的課程</div>
+      <ol>
+        <li><span class="num">1</span><span><b>投資是什麼</b><small>流量・存量</small></span></li>
+        <li><span class="num">2</span><span><b>要多少資本才夠</b><small>租賃成本・K*</small></span></li>
+        <li><span class="num">3</span><span><b>缺口怎麼補</b><small>彈性加速模型</small></span></li>
+        <li><span class="num">4</span><span><b>真實世界的投資</b><small>三個部門・存貨</small></span></li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<!-- 2 -->
+<section class="slide"><div class="wrap">
+  <h2>疫情讓消費消失，卻讓投資暴增</h2>
+  <p>2020 年春天經濟萎縮，主要是因為大家待在家、<b>消費消失</b>。但疫情帶來的改變，反而讓企業<span class="hl">需要更多投資</span>：數位需求暴增。</p>
+  <div class="icons bignums">
+    <div class="icon"><div style="font-size:clamp(40px,5vw,64px);font-weight:700;color:var(--yellow)">17%</div><b>美國電腦投資</b><br><span class="small muted">比疫情前趨勢高出</span></div>
+    <div class="icon"><div style="font-size:clamp(40px,5vw,64px);font-weight:700;color:var(--blue)">1,000 億</div><b>台積電（美元）</b><br><span class="small muted">三年擴產；2022 年單年 400–440 億</span></div>
+    <div class="icon"><div style="font-size:clamp(40px,5vw,64px);font-weight:700;color:var(--green)">200 億+</div><b>英特爾（美元）</b><br><span class="small muted">俄亥俄州兩座工廠</span></div>
+  </div>
+  <p class="small muted" style="margin-top:14px">出處：The Economist〈The urge to splurge〉。⚠️ 簡報標示 2021-02-05，但內文提到 2022 年 1 月的事，日期待確認。</p>
+</div></section>
+
+<!-- 3 -->
+<section class="slide"><div class="wrap">
+  <h2>為什麼 2020 年代的投資會更強？</h2>
+  <div class="icons" style="grid-template-columns:repeat(3,1fr)">
+    <div class="icon"><div class="e">🔗</div><b>強化供應鏈</b><br><span class="small muted">讓供應鏈更強韌、更分散</span></div>
+    <div class="icon"><div class="e">🤖</div><b>新技術</b><br><span class="small muted">帶動生產力成長</span></div>
+    <div class="icon"><div class="e">🌱</div><b>減碳</b><br><span class="small muted">占全球經濟 90% 的國家承諾淨零排放</span></div>
+  </div>
+  <h3 style="margin-top:18px">恢復速度：疫情 vs 金融海嘯（美國民間非住宅投資，相對危機前趨勢）</h3>
+  <table>
+    <tr><th></th><th>全球金融危機</th><th>新冠疫情</th></tr>
+    <tr><td>總投資</td><td class="down">跌到約 −30%，持續低迷</td><td class="up">跌到約 −12% 後回升</td></tr>
+    <tr><td>設備</td><td class="down">約 −35%</td><td class="up">約 −20% 後回到接近趨勢</td></tr>
+  </table>
+  <p class="small muted">數值為圖表目測（來源：Bureau of Economic Analysis、The Economist）</p>
+  <div class="note">強化供應鏈；新技術帶動生產力成長；減碳。</div>
+</div></section>
+
+<!-- 4 -->
+<section class="slide"><div class="wrap">
+  <h2>投資為什麼重要？</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-gdpinv"></svg><p class="small muted" style="text-align:center">示意圖，仿 Figure 15-1（美國 1959–2012）</p></div>
+    <div>
+      <div class="card"><h3>⏳ 連結現在與未來</h3><p>今天買的機器，明天才開始生產。</p></div>
+      <div class="card" style="margin-top:10px"><h3>🔗 連結商品與貨幣市場</h3><p>投資要看利率（貨幣市場），又是需求的一部分（商品市場）。</p></div>
+      <div class="card" style="margin-top:10px"><h3>🎢 推動景氣循環</h3><p>投資的起伏比 GDP 大得多：2008–2009 年從約 2.1 兆跌到約 1.4 兆美元。</p></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 5 -->
+<section class="slide"><div class="wrap">
+  <h2>流量 vs 存量</h2>
+  <p class="big-q" style="text-align:center">投資理論 ＝ <span class="hl">資本需求理論</span></p>
+  <div class="cols">
+    <div>
+      <table>
+        <tr><th></th><th>存量</th><th>流量</th></tr>
+        <tr><td>意思</td><td>某一<b>時點</b>有多少</td><td>一段<b>期間</b>流進多少</td></tr>
+        <tr><td>例子</td><td><b>資本</b>：所有建築、機器、存貨的價值</td><td><b>投資</b>：一段期間內為增加資本的支出；<b>GDP</b> 也是流量</td></tr>
+      </table>
+      <p>投資流量和資本存量相比，其實<b>很小</b>。</p>
+    </div>
+    <div class="card">
+      <h3>🛁 浴缸</h3>
+      <p>水位＝<b>資本</b>（存量）<br>水龍頭流進來的水＝<b>投資</b>（流量）<br>排水口＝<b>折舊</b></p>
+      <p class="small muted">和第 3 章的水桶是同一個想法（比喻為補充）</p>
+    </div>
+  </div>
+  <div class="note">投資理論＝資本需求理論；為了增加資本存量支出的流量；投資是流量，資本是存量。</div>
+</div></section>
+
+<!-- 6 -->
+<section class="slide"><div class="wrap">
+  <h2>要多少資本才夠？企業在權衡什麼</h2>
+  <p>企業用資本、勞動和其他資源生產，目標是<b>利潤最大化</b>。每多買一台機器之前，都要放上天平秤一秤：</p>
+  <div class="cols">
+    <div class="card" style="border-color:var(--green)">
+      <h3>⚖️ 左盤：好處</h3>
+      <p class="big-q" style="font-size:clamp(20px,2.4vw,28px)">資本的邊際產出（MPK）</p>
+      <p>每多投入一單位資本，能多生產多少</p>
+    </div>
+    <div class="card" style="border-color:var(--accent)">
+      <h3>⚖️ 右盤：成本</h3>
+      <p class="big-q" style="font-size:clamp(20px,2.4vw,28px)">資本的租賃成本（rc）</p>
+      <p>每多使用一單位資本，要付出多少</p>
+    </div>
+  </div>
+  <p style="text-align:center;margin-top:12px">好處 &gt; 成本 → 繼續買；好處 &lt; 成本 → 停手。</p>
+  <div class="note">權衡：增加資本帶來的營收（資本的邊際產量）vs 取得額外資本的成本。</div>
+</div></section>
+
+<!-- 7 -->
+<section class="slide"><div class="wrap">
+  <h2>用一台機器要花多少？租賃成本</h2>
+  <div class="formula" style="font-size:clamp(28px,4vw,48px)"><i>rc</i> = <i>r</i> + <i>δ</i> = <i>i</i> − <i>π<sup>e</sup></i> + <i>δ</i></div>
+  <div class="flow">
+    <div class="box">① 借錢買機器<br>利率 <span class="m"><i>i</i></span></div><div class="arrow">→</div>
+    <div class="box">② 有通膨<br>機器名目價值會漲</div><div class="arrow">→</div>
+    <div class="box">③ 明年通膨未知<br>用預期 <span class="m"><i>π<sup>e</sup></i></span></div><div class="arrow">→</div>
+    <div class="box">④ 機器會耗損<br>加折舊 <span class="m"><i>δ</i></span></div>
+  </div>
+  <div class="card"><h3>🔧 像租一台機器</h3><p>你要付「借錢的利息（扣掉機器漲價的部分）」再加上「一年用下來的磨損」。<span class="small muted">（比喻為補充）</span></p></div>
+  <p class="small muted">🔣 簡報寫 d，wiki 統一寫成 δ。</p>
+  <div class="note">i＝名目利率；i − π^e＝實質利率；δ＝資本折舊率。</div>
+</div></section>
+
+<!-- 8 -->
+<section class="slide"><div class="wrap">
+  <h2>實質利率：扣掉通膨才是真成本</h2>
+  <div class="formula" style="font-size:clamp(30px,4.4vw,54px)"><i>r</i> = <i>i</i> − <i>π<sup>e</sup></i></div>
+  <div class="icons" style="grid-template-columns:repeat(3,1fr)">
+    <div class="icon"><div class="s">i</div><b>名目利率</b><br><span class="small muted">合約上寫的利率</span></div>
+    <div class="icon"><div class="s">π<sup>e</sup></div><b>預期通膨</b><br><span class="small muted">做決定時，明年通膨還不知道</span></div>
+    <div class="icon"><div class="s">r</div><b>實質利率</b><br><span class="small muted">真正的借款成本</span></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h3>🏠 例子</h3><p>房貸利率 5%，預期通膨 2% → 實質利率約 <b class="hl">3%</b>。你每年真正多付出的購買力是 3%。<span class="small muted">（例子為補充）</span></p></div>
+  <p class="small muted">🔣 小寫 <i>r</i> 是實質利率；第 13 章的大寫 <i>R</i> 是實質匯率，兩個不一樣。</p>
+</div></section>
+
+<!-- 9 -->
+<section class="slide"><div class="wrap">
+  <h2>最適資本存量：MPK = rc</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-mpk"></svg></div>
+    <div>
+      <p>資本愈多，多一台機器帶來的產出愈少（<b>邊際產出遞減</b>）。</p>
+      <p>企業會一直加資本，直到：</p>
+      <div class="formula" style="font-size:clamp(22px,2.8vw,32px)">最後一單位的 MPK = <i>rc</i></div>
+      <p>租賃成本從 <span class="m"><i>rc</i><sub>0</sub></span> 升到 <span class="m"><i>rc</i><sub>1</sub></span> → 要更高的邊際產出才划算 → 資本降到 <span class="m"><i>K</i><sub>1</sub>*</span>。</p>
+      <p class="big-q" style="font-size:clamp(18px,2.2vw,24px)">成本愈高，<span class="hl">想要的資本愈少</span></p>
+    </div>
+  </div>
+  <div class="note">企業持續增加資本，直到最後一單位 MPK = rc；資本邊際產量遞減。</div>
+</div></section>
+
+<!-- 10 -->
+<section class="slide"><div class="wrap">
+  <h2>K* = g(rc, Y)：兩個旋鈕</h2>
+  <div class="formula" style="font-size:clamp(28px,4vw,48px)"><i>K</i>* = <i>g</i>(<i>rc</i>, <i>Y</i>)</div>
+  <div class="cols">
+    <div class="card">
+      <h3>🎛️ 旋鈕一：租賃成本 <span class="m"><i>rc</i></span></h3>
+      <p>利率↑、預期通膨↓、折舊↑ → <span class="m"><i>rc</i></span>↑ → <span class="m"><i>K</i>*</span> <span class="down">↓</span></p>
+    </div>
+    <div class="card">
+      <h3>🎛️ 旋鈕二：產出 <span class="m"><i>Y</i></span></h3>
+      <p>需求愈多、要生產愈多 → 需要更多機器 → <span class="m"><i>K</i>*</span> <span class="up">↑</span></p>
+    </div>
+  </div>
+  <p class="big-q" style="text-align:center;font-size:clamp(19px,2.4vw,26px)">任何讓 <i>K</i>* 上升的因素，都會讓投資增加</p>
+  <div class="note">K*＝最適資本存量；rc＝租賃成本；Y＝產出。</div>
+</div></section>
+
+<!-- 11 -->
+<section class="slide"><div class="wrap">
+  <h2>需求增加後：短期 vs 長期</h2>
+  <div class="cols">
+    <div><svg class="chart" id="c-dd"></svg><p class="small muted" style="text-align:center">(a) 資本需求：DD₀ → DD₁</p></div>
+    <div><svg class="chart" id="c-flow"></svg><p class="small muted" style="text-align:center">(b) 投資流量：價格愈高，投資愈多</p></div>
+  </div>
+  <div class="cols">
+    <div class="card"><h3>⚡ 短期</h3><p>資本存量來不及變 → 資本價格 <span class="m"><i>P</i><sub>0</sub></span> 飆到 <span class="m"><i>P</i><sub>1</sub></span> → 投資從 <span class="m"><i>I</i><sub>0</sub></span> 增加到 <span class="m"><i>I</i><sub>1</sub></span></p></div>
+    <div class="card"><h3>🐢 長期</h3><p>資本供給很有彈性 → 價格回到 <span class="m"><i>P</i><sub>0</sub></span>，但資本已經從 <span class="m"><i>K</i><sub>0</sub></span> 變成 <span class="m"><i>K</i><sub>1</sub></span></p></div>
+  </div>
+  <div class="note">I₀ 足以抵消資本的折舊（維持現有存量）；短期內資本存量固定，會先推升資本的價格，使投資流量增加。</div>
+</div></section>
+
+<!-- 12 -->
+<section class="slide"><div class="wrap">
+  <h2>你的四步驟筆記</h2>
+  <p class="muted">第 11 張是你自己整理的，寫得很清楚，直接搬上黑板：</p>
+  <div class="cols">
+    <div class="note" style="margin-top:6px">① <b>需求增加</b>：引發了對更高資本存量（<i>K</i>₁）的需求。</div>
+    <div class="note" style="margin-top:6px">② <b>價格短期飆升</b>：因為資本存量調整緩慢，短期內供需失衡導致成本（租賃價格）上升。</div>
+  </div>
+  <div class="cols">
+    <div class="note">③ <b>投資填補缺口</b>：為了縮小現有資本與理想資本之間的差距，企業產生了額外的投資流量（<i>I</i>₁）。</div>
+    <div class="note">④ <b>長期回歸</b>：隨著投資不斷注入，資本存量增加，稀缺性降低，價格（成本）最終回歸平穩。</div>
+  </div>
+  <p style="text-align:center;margin-top:10px" class="big-q">第 ③ 步的「缺口」有多快補上？下一頁。</p>
+</div></section>
+
+<!-- 13 -->
+<section class="slide"><div class="wrap">
+  <h2>彈性加速模型：每期補一部分缺口</h2>
+  <div class="cols">
+    <div>
+      <div class="formula" style="font-size:clamp(20px,2.6vw,30px)"><i>K</i><sub>0</sub> = <i>K</i><sub>−1</sub> + <i>λ</i>(<i>K</i>* − <i>K</i><sub>−1</sub>)</div>
+      <div class="formula" style="font-size:clamp(22px,2.8vw,32px)"><i>I</i> = <i>λ</i>(<i>K</i>* − <i>K</i><sub>−1</sub>)</div>
+      <ul>
+        <li><span class="m"><i>K</i><sub>−1</sub></span>：上一期期末的資本</li>
+        <li><span class="m"><i>K</i>*</span>：想要的資本</li>
+        <li><span class="m"><i>λ</i></span>：每期補上缺口的比例（速度）</li>
+      </ul>
+      <p class="big-q" style="font-size:clamp(18px,2.2vw,24px)">缺口愈大，投資愈多</p>
+    </div>
+    <div class="card">
+      <h3>🔢 算算看（補充例子）</h3>
+      <p><span class="m"><i>λ</i></span> = 0.5，<span class="m"><i>K</i>*</span> = 100，<span class="m"><i>K</i><sub>−1</sub></span> = 60</p>
+      <table>
+        <tr><th>期</th><th>缺口</th><th>投資</th><th>資本</th></tr>
+        <tr><td>1</td><td>40</td><td>20</td><td>80</td></tr>
+        <tr><td>2</td><td>20</td><td>10</td><td>90</td></tr>
+        <tr><td>3</td><td>10</td><td>5</td><td>95</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="note">彈性加速模型解釋企業調整資本存量的速度；缺口越大越快；K₀ = K₋₁ + I。</div>
+</div></section>
+
+<!-- 14 -->
+<section class="slide"><div class="wrap">
+  <h2>投資會一期比一期少</h2>
+  <div class="cols wide-left">
+    <div>
+      <h3>資本存量：逐期逼近 <span class="m"><i>K</i>*</span> = 100</h3>
+      <div id="accel-k" class="accel"></div>
+      <h3 style="margin-top:14px">每期投資：逐期遞減</h3>
+      <div id="accel-i" class="accel"></div>
+      <p class="small muted">λ = 0.5 的示意（仿 Figure 15-5）</p>
+    </div>
+    <div>
+      <p>一開始缺口最大，投資也最多；之後缺口愈來愈小，投資跟著愈來愈少。</p>
+      <p>這叫投資的<b>動態</b>特性：<span class="m"><i>K</i>*</span> 變一次，會帶來好幾期逐漸變小的投資。</p>
+      <p class="big-q" style="font-size:clamp(18px,2.2vw,24px)">新工廠蓋好之前，<br>投資會持續好幾年</p>
+    </div>
+  </div>
+  <div class="note">λ，缺口越來越小。</div>
+</div></section>
+
+<!-- 15 -->
+<section class="slide"><div class="wrap">
+  <h2>三種投資：誰最大、誰最會晃？</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-three"></svg><p class="small muted" style="text-align:center">占 GDP 比例，示意圖，仿 Figure 15-6（1959–2012）</p></div>
+    <div>
+      <table>
+        <tr><th>部門</th><th>約占 GDP</th><th>特點</th></tr>
+        <tr><td>🏭 企業固定投資</td><td>9–14%</td><td class="up">規模最大</td></tr>
+        <tr><td>🏠 住宅投資</td><td>2.5–6%</td><td>跟房貸利率反向</td></tr>
+        <tr><td>📦 存貨投資</td><td>−2–2%</td><td class="down">波動最大</td></tr>
+      </table>
+      <p class="small muted">數值為圖表目測</p>
+    </div>
+  </div>
+  <div class="note">企業固定投資；住宅投資；存貨投資——波動最大。</div>
+</div></section>
+
+<!-- 16 -->
+<section class="slide"><div class="wrap">
+  <h2>房貸利率一高，蓋房子就少</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-mort"></svg><p class="small muted" style="text-align:center">示意圖，仿 Figure 15-7（只畫 1973–2006）。2007 年後房市泡沫破裂，兩者一起下跌，是例外（補充）</p></div>
+    <div>
+      <ul>
+        <li>房貸利率<b>低</b> → 住宅投資<span class="up">高</span></li>
+        <li>房貸利率<b>高</b> → 住宅投資<span class="down">低</span></li>
+      </ul>
+      <table>
+        <tr><th>年份</th><th>房貸利率</th><th>住宅投資／GDP</th></tr>
+        <tr><td>1981</td><td class="down">約 18%</td><td class="down">約 3.5%</td></tr>
+        <tr><td>2005</td><td class="up">約 6%</td><td class="up">約 6.3%</td></tr>
+      </table>
+      <p class="small muted">數值為圖表目測</p>
+      <p>和租賃成本一樣的道理：利率↑ → 成本↑ → 投資↓。</p>
+    </div>
+  </div>
+  <div class="note">房貸利率。</div>
+</div></section>
+
+<!-- 17 -->
+<section class="slide"><div class="wrap">
+  <h2>企業為什麼要囤存貨？</h2>
+  <p>存貨＝企業持有、準備賣出的<b>原料</b>、<b>在製品</b>和<b>製成品</b>。四個理由：</p>
+  <div class="icons">
+    <div class="icon"><div class="e">📬</div><b>應付未來需求</b><br><span class="small muted">商品沒辦法馬上做出來</span></div>
+    <div class="icon"><div class="e">🛒</div><b>大量訂比較便宜</b><br><span class="small muted">少次大量 &lt; 多次少量</span></div>
+    <div class="icon"><div class="e">⚙️</div><b>讓生產平穩</b><br><span class="small muted">用固定速度生產</span></div>
+    <div class="icon"><div class="e">🔩</div><b>生產中免不了</b><br><span class="small muted">在製品一定會有</span></div>
+  </div>
+  <div class="cols" style="margin-top:14px">
+    <div class="card"><h3>📉 製造業存貨對銷售比</h3><p>1990 年以前：<b>13%–17%</b><br>之後：降到約 <b class="hl">11%</b></p></div>
+    <div class="card"><h3>⏱️ 為什麼下降？</h3><p><b>及時生產</b>（just-in-time）：需要時才進貨、生產，不囤太多。</p></div>
+  </div>
+</div></section>
+
+<!-- 18 -->
+<section class="slide"><div class="wrap">
+  <h2>大衰退：存貨先暴增後暴跌</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-rec"></svg><p class="small muted" style="text-align:center">示意圖，仿 Figure 15-11（⚠️ 原圖左右座標軸標籤對調，此處依刻度內容標示）</p></div>
+    <div>
+      <div class="flow" style="justify-content:flex-start">
+        <div class="box">銷售突然下滑</div><div class="arrow">→</div>
+        <div class="box">存貨意外累積<br>存貨比飆到約 1.49</div>
+      </div>
+      <div class="flow" style="justify-content:flex-start">
+        <div class="arrow">→</div><div class="box out">企業大砍存貨<br>減產、裁員</div><div class="arrow">→</div><div class="box">衰退加深</div>
+      </div>
+      <p class="small">存貨（十億美元）：2006 年約 1,325 → 2008 年中約 1,540 → 2009 年中約 1,310 → 2012 年底約 1,620（目測）</p>
+      <p class="small muted">存貨投資和 GDP 變動幾乎同步起伏（Figure 15-9）。解讀為補充推論。</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 19 -->
+<section class="slide"><div class="wrap">
+  <h2>回到台積電＋重點回顧</h2>
+  <div class="cols">
+    <div>
+      <h3>一條推論鏈</h3>
+      <div class="flow" style="justify-content:flex-start;gap:6px">
+        <div class="box">利率 i</div><div class="arrow">→</div><div class="box">租賃成本 rc</div><div class="arrow">→</div><div class="box">K*</div><div class="arrow">→</div><div class="box">缺口</div><div class="arrow">→</div><div class="box core">投資 I</div>
+      </div>
+      <div class="warn small"><b>推論（非簡報原文）：</b>數位需求讓預期產出 <i>Y</i>↑、新技術讓 MPK↑ → 台積電的 <i>K</i>* 大幅上升 → 缺口很大 → 好幾年的大規模投資。</div>
+      <h3 style="margin-top:.6em">五個重點</h3>
+      <ol>
+        <li>投資是流量，資本是存量</li>
+        <li><span class="m"><i>rc</i> = <i>i</i> − <i>π<sup>e</sup></i> + <i>δ</i></span></li>
+        <li>MPK = rc 決定 <span class="m"><i>K</i>*</span></li>
+        <li><span class="m"><i>I</i> = <i>λ</i>(<i>K</i>* − <i>K</i><sub>−1</sub>)</span></li>
+        <li>企業固定投資最大，存貨投資波動最大</li>
+      </ol>
+    </div>
+    <div>
+      <h3>常見誤解</h3>
+      <ul>
+        <li>❌ 投資和資本是同一個東西</li>
+        <li>❌ 租賃成本看名目利率就好</li>
+        <li>❌ <i>K</i>* 不變，投資也不會變小</li>
+        <li>❌ 住宅投資和利率沒關係</li>
+      </ul>
+      <p>這條推論鏈，就是第 13 章 IS 曲線裡 <span class="m"><i>I</i>(<i>i</i>)</span> 的由來：利率↓ → 投資↑。</p>
+      <p class="small muted">想深入看：wiki 的「最適資本存量」「投資的決定因素」「彈性加速模型」頁</p>
+    </div>
+  </div>
+</div></section>
+
+<nav>
+  <span class="sticks" aria-hidden="true"><i></i><i></i><i></i></span>
+  <span class="eraser" aria-hidden="true"></span>
+  <a class="home" href="../index.html" aria-label="回到單元首頁">🏠 首頁</a>
+  <button id="prev" aria-label="上一頁">← 上一頁</button>
+  <span id="counter"></span>
+  <button id="next" aria-label="下一頁">下一頁 →</button>
+</nav>
+
+<script>
+// ---------- chart helper (inline SVG, no libraries) ----------
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function chart(id, cfg){
+  const svg = document.getElementById(id); if (!svg) return;
+  const W = cfg.w || 520, H = cfg.h || 360, L = 46, R = cfg.right || 92, T = 18, B = 40;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const x0 = cfg.xmin || 0, x1 = cfg.xmax || 1, y0 = cfg.ymin || 0, y1 = cfg.ymax || 1;
+  const X = x => L + (x - x0) / (x1 - x0) * (W - L - R);
+  const Y = y => H - B - (y - y0) / (y1 - y0) * (H - T - B);
+  const defs = el('defs', {}, svg);
+  const mk = el('marker', {id: id + '-arr', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse'}, defs);
+  el('path', {d: 'M0,0 L10,5 L0,10 z', fill: 'var(--accent)'}, mk);
+  // axes
+  el('line', {x1: L, y1: H - B, x2: W - R + 20, y2: H - B, class: 'axis'}, svg);
+  el('line', {x1: L, y1: T - 4, x2: L, y2: H - B, class: 'axis'}, svg);
+  if (cfg.xlabel) el('text', {x: W - R + 24, y: H - B + 5, class: 'lbl'}, svg, cfg.xlabel);
+  if (cfg.ylabel) el('text', {x: L - 8, y: T - 4, 'text-anchor': 'end', class: 'lbl'}, svg, cfg.ylabel);
+  (cfg.xticks || []).forEach(t => el('text', {x: X(t[0]), y: H - B + 18, 'text-anchor': 'middle', class: 'tick'}, svg, t[1]));
+  (cfg.yticks || []).forEach(t => el('text', {x: L - 6, y: Y(t[0]) + 4, 'text-anchor': 'end', class: 'tick'}, svg, t[1]));
+  (cfg.guides || []).forEach(g => el('line', {x1: X(g[0]), y1: Y(g[1]), x2: X(g[2]), y2: Y(g[3]), class: 'guide'}, svg));
+  (cfg.curves || []).forEach(c => {
+    const a = c.from !== undefined ? c.from : x0, b = c.to !== undefined ? c.to : x1, pts = [];
+    for (let i = 0; i <= 160; i++){ const x = a + (b - a) * i / 160, y = c.fn(x); if (y <= y1 * 1.01) pts.push(X(x).toFixed(1) + ',' + Y(y).toFixed(1)); }
+    el('polyline', {points: pts.join(' '), class: 'curve' + (c.dash ? ' dash' : ''), style: `stroke:var(--${c.color})`}, svg);
+    if (c.label){
+      const lx = c.lx !== undefined ? c.lx : b;
+      el('text', {x: X(lx) + 6, y: Y(c.fn(lx)) + 5 + (c.dy || 0), class: 'lbl', style: `fill:var(--${c.color})`}, svg, c.label);
+    }
+  });
+  (cfg.data || []).forEach(d => {
+    el('polyline', {points: d.pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' '), class: 'curve', style: `stroke:var(--${d.color})`}, svg);
+  });
+  (cfg.segs || []).forEach(s => el('line', {x1: X(s[0]), y1: Y(s[1]), x2: X(s[2]), y2: Y(s[3]), class: s[4] || 'step'}, svg));
+  (cfg.arrows || []).forEach(a => el('line', {x1: X(a[0]), y1: Y(a[1]), x2: X(a[2]), y2: Y(a[3]), stroke: 'var(--accent)', 'stroke-width': 2.5, 'marker-end': `url(#${id}-arr)`}, svg));
+  (cfg.points || []).forEach(p => {
+    el('circle', {cx: X(p[0]), cy: Y(p[1]), r: 5, class: 'pt', style: 'fill:var(--ink)'}, svg);
+    if (p[2]) el('text', {x: X(p[0]) + (p[3] || 8), y: Y(p[1]) + (p[4] || -8), class: 'lbl'}, svg, p[2]);
+  });
+  (cfg.texts || []).forEach(t => el('text', {x: X(t[0]), y: Y(t[1]), 'text-anchor': t[3] || 'start', class: t[4] || '', style: t[5] || ''}, svg, t[2]));
+}
+
+// ---------- chapter 15 charts (illustrative) ----------
+let seed = 11;
+const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 - 0.5; };
+
+// GDP vs investment (indexed shapes, not actual data)
+const gdpPts = [], invPts = [];
+for (let y = 1960; y <= 2012; y++) {
+  const t = (y - 1960) / 52;
+  const g = 0.12 + 0.75 * t;
+  let iv = 0.1 + 0.72 * t + 0.03 * Math.sin(y / 1.7) + 0.04 * rnd();
+  if (y >= 2007 && y <= 2010) iv -= [0.05, 0.18, 0.3, 0.2][y - 2007];
+  if (y === 1975 || y === 1982 || y === 1991) iv -= 0.06;
+  gdpPts.push([y, g]); invPts.push([y, iv]);
+}
+chart('c-gdpinv', {
+  xmin: 1958, xmax: 2014, ymin: 0, ymax: 1, right: 80, ylabel: '規模',
+  data: [{color: 'ink', pts: gdpPts}, {color: 'blue', pts: invPts}],
+  texts: [[2013, gdpPts[52][1] + .04, 'GDP', 'start', 'lbl'], [2013, invPts[52][1] - .1, '投資', 'start', 'lbl', 'fill:var(--blue)'], [2009, .38, '2009 投資重挫', 'middle', 'tick']],
+  xticks: [[1960, '1960'], [1980, '1980'], [2000, '2000'], [2010, '2010']]
+});
+
+// MPK diminishing; rc0 = .3, rc1 = .4
+const MPK = k => 0.12 + 0.5 / (1 + 5 * k);
+const Kof = rc => (0.5 / (rc - 0.12) - 1) / 5;
+const rc0 = 0.3, rc1 = 0.4, K0s = Kof(rc0), K1s = Kof(rc1);
+chart('c-mpk', {
+  xmax: 1, ymax: .7, xlabel: 'K', ylabel: 'MPK', right: 70,
+  curves: [{fn: MPK, color: 'blue', label: 'MPK', from: .02, to: 1}],
+  segs: [[0, rc0, .95, rc0, 'guide'], [0, rc1, .95, rc1, 'guide'], [K0s, 0, K0s, rc0, 'guide'], [K1s, 0, K1s, rc1, 'guide']],
+  points: [[K0s, rc0], [K1s, rc1]],
+  arrows: [[K0s - .01, .05, K1s + .02, .05]],
+  yticks: [[rc0, 'rc₀'], [rc1, 'rc₁']], xticks: [[K1s, 'K₁*'], [K0s, 'K₀*']]
+});
+
+// capital demand DD0, DD1 and investment flow
+const DD0 = k => 0.12 / k, DD1 = k => 0.12 / (k - 0.15);
+const Kc0 = 0.4, P0 = DD0(Kc0), P1 = DD1(Kc0), Kc1 = 0.15 + 0.12 / P0;
+chart('c-dd', {
+  xmax: 1, ymax: .9, xlabel: 'K', ylabel: '資本價格', right: 60, h: 300,
+  curves: [{fn: DD0, color: 'ink', label: 'DD₀', from: .14, to: .95, lx: .8, dy: 14}, {fn: DD1, color: 'blue', label: 'DD₁', from: .29, to: 1, lx: .8, dy: -10}],
+  segs: [[0, P0, Kc1, P0, 'guide'], [0, P1, Kc0, P1, 'guide'], [Kc0, 0, Kc0, P1, 'guide'], [Kc1, 0, Kc1, P0, 'guide']],
+  points: [[Kc0, P0], [Kc0, P1], [Kc1, P0]],
+  yticks: [[P0, 'P₀'], [P1, 'P₁']], xticks: [[Kc0, 'K₀'], [Kc1, 'K₁']]
+});
+const Pflow = I => 0.2 + 0.5 * I * I;
+const I0 = Math.sqrt((P0 - 0.2) / 0.5), I1 = Math.sqrt((P1 - 0.2) / 0.5);
+chart('c-flow', {
+  xmax: 1, ymax: .9, xlabel: 'I', ylabel: '資本價格', right: 60, h: 300,
+  curves: [{fn: Pflow, color: 'blue', label: '投資流量', from: 0, to: .95, lx: .85, dy: -12}],
+  segs: [[0, P0, I0, P0, 'guide'], [0, P1, I1, P1, 'guide'], [I0, 0, I0, P0, 'guide'], [I1, 0, I1, P1, 'guide']],
+  points: [[I0, P0], [I1, P1]],
+  yticks: [[P0, 'P₀'], [P1, 'P₁']], xticks: [[I0, 'I₀'], [I1, 'I₁']]
+});
+
+// flexible accelerator bars (lambda = .5)
+const kSeries = [60], iSeries = [];
+for (let t = 0; t < 7; t++) { const inv = 0.5 * (100 - kSeries[t]); iSeries.push(inv); kSeries.push(kSeries[t] + inv); }
+const barRow = (id, vals, max, color, fmt) => {
+  const el = document.getElementById(id); if (!el) return;
+  el.style.cssText = 'display:flex;align-items:flex-end;gap:10px;height:150px;border-bottom:2px solid var(--axis);border-left:2px solid var(--axis);padding:0 8px';
+  vals.forEach(v => { const b = document.createElement('div'); b.style.cssText = `flex:1;height:${Math.max(2, v / max * 100)}%;background:${color};border-radius:4px 4px 0 0;position:relative;opacity:.9`; b.innerHTML = `<span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:13px;color:var(--ink)">${fmt(v)}</span>`; el.appendChild(b); });
+};
+barRow('accel-k', kSeries.slice(0, 7), 100, 'var(--blue)', v => Math.round(v));
+barRow('accel-i', iSeries, 20, 'var(--yellow)', v => (v >= 1 ? Math.round(v) : v.toFixed(1)));
+
+// three investment subsectors (% of GDP, illustrative)
+const bfi = [], res = [], inv = [];
+for (let y = 1960; y <= 2012; y++) {
+  bfi.push([y, 11 + 1.8 * Math.sin((y - 1966) / 7) + (y > 1978 && y < 1984 ? 1.8 : 0) - (y >= 2009 && y <= 2011 ? 2 : 0)]);
+  res.push([y, 4.6 + 0.9 * Math.sin((y - 1964) / 4.2) + (y >= 2003 && y <= 2006 ? 1.3 : 0) - (y >= 2008 ? 1.8 : 0)]);
+  inv.push([y, 0.6 + 1.1 * rnd() * 2 - (y === 2009 ? 1.8 : 0)]);
+}
+chart('c-three', {
+  xmin: 1958, xmax: 2014, ymin: -3, ymax: 15, right: 90, ylabel: '% GDP',
+  data: [{color: 'ink', pts: bfi}, {color: 'blue', pts: res}, {color: 'gray', pts: inv}],
+  segs: [[1958, 0, 2014, 0, 'guide']],
+  texts: [[2013, bfi[52][1], '企業固定', 'start', 'lbl'], [2013, res[52][1], '住宅', 'start', 'lbl', 'fill:var(--blue)'], [2013, inv[52][1] - .8, '存貨', 'start', 'lbl', 'fill:var(--gray)']],
+  yticks: [[0, '0'], [5, '5'], [10, '10']], xticks: [[1960, '1960'], [1980, '1980'], [2000, '2000']]
+});
+
+// mortgage rate vs residential investment (illustrative, inverse)
+const mort = [[1973, 7.5], [1975, 9.2], [1977, 8.8], [1981, 18], [1984, 13.5], [1987, 10], [1990, 10], [1994, 8], [1998, 7], [2001, 7], [2003, 5.8], [2005, 5.9]];
+const resi = [[1973, 6], [1975, 3.9], [1977, 5.7], [1981, 3.4], [1984, 4.7], [1987, 4.8], [1990, 4.1], [1994, 4.4], [1998, 4.6], [2001, 4.7], [2003, 5.3], [2005, 6.3]];
+chart('c-mort', {
+  xmin: 1972, xmax: 2007, ymin: 0, ymax: 20, right: 110, ylabel: '%',
+  data: [{color: 'blue', pts: mort}, {color: 'yellow', pts: resi}],
+  texts: [[1982, 18.8, '房貸利率', 'start', 'lbl', 'fill:var(--blue)'], [2006, 6.3, '住宅投資／GDP', 'start', 'lbl', 'fill:var(--yellow)']],
+  yticks: [[5, '5'], [10, '10'], [15, '15']], xticks: [[1975, '1975'], [1985, '1985'], [1995, '1995'], [2005, '2005']]
+});
+
+// inventories in the Great Recession: ratio mapped onto the same axis (ratio*1000+100)
+const invLvl = [[2006, 1325], [2006.5, 1380], [2007, 1420], [2007.5, 1470], [2008, 1515], [2008.4, 1540], [2008.8, 1470], [2009.2, 1390], [2009.6, 1312], [2010, 1340], [2010.5, 1400], [2011, 1480], [2011.5, 1530], [2012, 1580], [2012.9, 1620]];
+const ratio = [[2006, 1.25], [2006.5, 1.31], [2007, 1.29], [2007.5, 1.28], [2008, 1.27], [2008.3, 1.30], [2008.6, 1.42], [2008.9, 1.49], [2009.2, 1.44], [2009.6, 1.33], [2010, 1.28], [2010.5, 1.28], [2011, 1.26], [2011.5, 1.26], [2012, 1.28], [2012.9, 1.27]].map(p => [p[0], p[1] * 1000 + 100]);
+chart('c-rec', {
+  xmin: 2006, xmax: 2013, ymin: 1300, ymax: 1650, right: 70, ylabel: '十億美元',
+  data: [{color: 'ink', pts: invLvl}, {color: 'blue', pts: ratio}],
+  segs: [[2007.95, 1300, 2007.95, 1650, 'guide'], [2009.5, 1300, 2009.5, 1650, 'guide']],
+  texts: [[2008.72, 1635, '衰退期間', 'middle', 'tick'], [2013.05, 1620, '存貨', 'start', 'lbl'], [2013.05, 1370, '存貨比', 'start', 'lbl', 'fill:var(--blue)'],
+          [2012.3, 1320, '右軸：存貨比 1.25 ≈ 1,350', 'middle', 'tick']],
+  yticks: [[1300, '1,300'], [1450, '1,450'], [1600, '1,600']], xticks: [[2007, '2007'], [2009, '2009'], [2011, '2011']]
+});
+
+document.querySelectorAll('svg.chart line').forEach(l => { if (l.getAttribute('class') === '') { l.setAttribute('stroke', 'var(--yellow)'); l.setAttribute('stroke-width', 4); } });
+
+// ---------- slide navigation ----------
+const slides = [...document.querySelectorAll('.slide')];
+const counter = document.getElementById('counter'), bar = document.getElementById('progress');
+let cur = 0;
+function show(i){
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+  slides[cur].scrollTop = 0;
+  counter.textContent = (cur + 1) + ' / ' + slides.length;
+  bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+  if (location.hash !== '#' + (cur + 1)) history.replaceState(null, '', '#' + (cur + 1));
+}
+document.getElementById('prev').onclick = () => show(cur - 1);
+document.getElementById('next').onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','PageDown',' ','Enter'].includes(e.key)) { e.preventDefault(); show(cur + 1); }
+  else if (['ArrowLeft','PageUp','Backspace'].includes(e.key)) { e.preventDefault(); show(cur - 1); }
+  else if (e.key === 'Home') show(0);
+  else if (e.key === 'End') show(slides.length - 1);
+});
+let tx = null;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive: true});
+document.addEventListener('touchend', e => {
+  if (tx === null) return; const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 60) show(cur + (dx < 0 ? 1 : -1)); tx = null;
+});
+show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+</script>
+</body>
+</html>

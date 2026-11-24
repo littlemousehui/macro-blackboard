@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>成長與政策</title>
+<style>
+:root{
+  --board:#24402f; --card:#24402f; --ink:#f4f1e6; --muted:#b8c6b6; --line:rgba(244,241,230,.32);
+  --accent:#ff9f8c; --accent-soft:rgba(255,226,120,.14); --blue:#8fd3f5; --green:#c3ec8e; --gray:#d0d0c8;
+  --yellow:#ffe27a; --pink:#ffb3c7; --wood1:#a8743f; --wood2:#6e4826; --frame:14px;
+  --note:#f7e27a; --note-ink:#3a2f05; --axis:#e9e6da;
+  --chalk-font:"Segoe UI","Microsoft JhengHei","微軟正黑體","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:#3b2a1a; color:var(--ink); font-family:var(--chalk-font);
+  line-height:1.65; overflow:hidden;
+  text-shadow:0 0 1px rgba(255,255,255,.45),0 0 8px rgba(255,255,255,.08);
+}
+/* wooden frame + board surface */
+#board{
+  position:fixed; inset:0; border:var(--frame) solid var(--wood2);
+  border-image:linear-gradient(135deg,var(--wood1),var(--wood2) 40%,var(--wood1) 70%,var(--wood2)) 1;
+  background-color:var(--board);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse 60% 40% at 25% 20%,rgba(255,255,255,.07),transparent 70%),
+    radial-gradient(ellipse 50% 30% at 75% 70%,rgba(255,255,255,.05),transparent 70%),
+    radial-gradient(ellipse 30% 18% at 60% 30%,rgba(255,255,255,.04),transparent 70%),
+    radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.35));
+  box-shadow:inset 0 0 40px rgba(0,0,0,.45);
+  z-index:0;
+}
+#progress{position:fixed;top:var(--frame);left:var(--frame);height:3px;background:var(--yellow);opacity:.8;transition:width .25s;z-index:5;filter:url(#chalk)}
+.slide{position:absolute;inset:var(--frame);bottom:calc(var(--frame) + 58px);display:none;overflow-y:auto;padding:36px 18px 28px;z-index:1}
+.slide.active{display:block;animation:write .45s ease}
+@keyframes write{from{opacity:0;filter:blur(2px)}to{opacity:1;filter:none}}
+.wrap{max-width:1360px;margin:0 auto}
+@media (min-width:1500px){p,li{font-size:23px}.formula{font-size:38px}}
+h1{font-size:clamp(36px,6vw,68px);line-height:1.2;margin:0 0 .3em;letter-spacing:.06em;filter:url(#chalk-soft)}
+h2{display:inline-block;font-size:clamp(26px,3.6vw,40px);line-height:1.3;margin:0 0 .7em;padding:0 .2em .15em;
+   border-bottom:3px solid var(--yellow);filter:url(#chalk-soft)}
+h3{font-size:clamp(19px,2.3vw,25px);margin:.2em 0 .4em;color:var(--yellow)}
+p,li{font-size:clamp(17px,2vw,22px)}
+ul,ol{padding-left:1.3em;margin:.3em 0}
+li{margin:.3em 0}
+li::marker{color:var(--yellow)}
+.kicker{color:var(--pink);font-weight:700;letter-spacing:.12em;font-size:clamp(15px,1.7vw,19px)}
+.muted{color:var(--muted)}
+.small{font-size:clamp(14px,1.5vw,16px)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.cols.wide-left{grid-template-columns:1.2fr 1fr}
+@media (max-width:760px){.cols,.cols.wide-left{grid-template-columns:1fr}}
+.card{background:rgba(255,255,255,.035);border:2px dashed rgba(244,241,230,.42);border-radius:14px 22px 12px 20px;padding:14px 20px}
+.big-q{font-size:clamp(24px,3.2vw,36px);font-weight:700;line-height:1.45}
+.hl{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.55);padding:0 .1em}
+/* sticky note pinned to the board */
+.note{position:relative;background:var(--note);color:var(--note-ink);text-shadow:none;border-radius:2px;
+  padding:14px 18px 12px;margin:20px 6px 4px;font-size:clamp(16px,1.8vw,20px);
+  box-shadow:3px 6px 14px rgba(0,0,0,.45);transform:rotate(-.8deg);
+  background-image:linear-gradient(transparent 0 85%,rgba(0,0,0,.05))}
+.note:nth-of-type(even){transform:rotate(.7deg)}
+.note::before{content:"📝 我的課堂筆記　";font-weight:700;color:#8a4b00}
+.note::after{content:"";position:absolute;top:-9px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#ff8a8a,#c0282d);box-shadow:1px 2px 3px rgba(0,0,0,.5)}
+.note i{color:inherit}
+.warn{border-left:4px solid var(--pink);background:rgba(255,179,199,.08);padding:10px 16px;border-radius:0 12px 12px 0;margin-top:14px}
+.formula{font-family:"Cambria Math","Times New Roman",serif;font-size:clamp(24px,3.2vw,36px);text-align:center;margin:.5em 0;white-space:nowrap;overflow-x:auto;color:#fffdf2;filter:url(#chalk-soft)}
+.formula i,.m i{font-style:italic}
+.m{font-family:"Cambria Math","Times New Roman",serif}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em;font-size:.9em}
+.frac>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .15em}
+.frac>span:last-child{padding:0 .15em}
+table{border-collapse:collapse;width:100%;font-size:clamp(15px,1.8vw,20px)}
+th,td{border:1.5px solid var(--line);padding:7px 10px;text-align:center}
+th{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.6)}
+.up{color:var(--green);font-weight:700}.down{color:var(--accent);font-weight:700}
+.chart{width:100%;height:auto;display:block;background:rgba(0,0,0,.08);border:2px dashed rgba(244,241,230,.25);border-radius:16px 10px 18px 12px}
+.chart .axis{stroke:var(--axis);stroke-width:2;filter:url(#chalk)}
+.chart .curve{fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;filter:url(#chalk)}
+.chart .dash{stroke-dasharray:8 7}
+.chart .guide{stroke:var(--gray);stroke-width:1.2;stroke-dasharray:4 5;opacity:.75}
+.chart .step{stroke:var(--yellow);stroke-width:2.4;fill:none;filter:url(#chalk)}
+.chart text{fill:var(--ink);font-size:15px;font-family:var(--chalk-font)}
+.chart text.lbl{font-weight:700}
+.chart text.tick{fill:var(--muted);font-size:13px}
+.chart .pt{stroke:var(--board);stroke-width:2}
+.bars .row{display:flex;align-items:center;gap:10px;margin:12px 0}
+.bars .name{width:7.5em;flex:none;font-size:clamp(15px,1.7vw,18px)}
+.bars .track{flex:1;display:flex;height:36px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.07);border:1.5px dashed var(--line)}
+.bars .seg{display:flex;align-items:center;justify-content:center;color:#17261c;font-weight:700;text-shadow:none;font-size:14px;white-space:nowrap;opacity:.92}
+.bars .total{width:4.2em;flex:none;font-weight:700;text-align:right;color:var(--yellow)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:15px;margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.flow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0}
+.flow .box{background:rgba(255,255,255,.035);border:2px solid var(--line);border-radius:16px 10px 18px 12px;padding:10px 14px;text-align:center;font-size:clamp(16px,1.9vw,20px)}
+.flow .box.in{border-color:var(--green)}.flow .box.out{border-color:var(--accent)}.flow .box.core{border-color:var(--blue);font-weight:700}
+.flow .arrow{font-size:28px;color:var(--yellow)}
+.icons{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:760px){.icons{grid-template-columns:repeat(2,1fr)}}
+.icon{border:2px dashed var(--line);border-radius:18px 12px 20px 10px;padding:12px;text-align:center}
+.icon .e{font-size:36px;text-shadow:none}
+.icon .s{font-family:"Cambria Math","Times New Roman",serif;font-size:30px;font-style:italic;font-weight:700;color:var(--yellow)}
+.title-slide{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 170px)}
+.corner{position:absolute;top:22px;right:28px;text-align:right;color:var(--muted);font-size:clamp(14px,1.6vw,18px);line-height:1.5;z-index:2}
+.corner b{color:var(--ink)}
+@media (max-width:700px){.corner{position:static;text-align:left;margin:0 auto 8px;max-width:1080px}}
+/* cover: two columns filling the whole board */
+.cover-grid{max-width:1500px;margin:0 auto;min-height:calc(100vh - 2*var(--frame) - 58px - 64px);
+  display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(24px,4vw,64px);align-items:center;padding:0 clamp(0px,2vw,32px)}
+.cover-left h1{font-size:clamp(44px,7vw,96px);margin:.1em 0 .25em}
+.cover-left .big-q{font-size:clamp(22px,2.8vw,38px)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:1.4em 0 1em}
+.chip{border:2px dashed var(--line);border-radius:999px;padding:6px 14px;font-size:clamp(14px,1.5vw,17px);color:var(--muted)}
+.chip b{color:var(--ink)}
+.hint{margin-top:1.6em}
+.cover-right{display:flex;flex-direction:column;gap:18px}
+.doodle{width:100%;border:2px dashed rgba(244,241,230,.25);border-radius:18px 12px 20px 10px;padding:12px;background:rgba(0,0,0,.08)}
+.agenda{border:2px solid rgba(255,226,122,.55);border-radius:14px 22px 12px 20px;padding:14px 20px;background:rgba(255,226,122,.05)}
+.agenda-title{color:var(--yellow);font-weight:700;font-size:clamp(17px,1.9vw,22px);margin-bottom:6px}
+.agenda ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.agenda li{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:clamp(15px,1.6vw,18px)}
+.agenda li small{display:block;color:var(--muted);font-size:.85em}
+.agenda .num{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--yellow);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:700;filter:url(#chalk-soft)}
+@media (max-width:860px){.cover-grid{grid-template-columns:1fr;min-height:0}.agenda ol{grid-template-columns:1fr}}
+.doodle path,.doodle line{fill:none;stroke-linecap:round;filter:url(#chalk)}
+/* chalk tray with nav */
+nav{position:fixed;left:var(--frame);right:var(--frame);bottom:var(--frame);height:58px;display:flex;align-items:center;justify-content:center;gap:14px;padding:0 16px;
+  background:linear-gradient(#8a5c30,#6a4322 60%,#553519);border-top:3px solid #b9864f;box-shadow:0 -4px 10px rgba(0,0,0,.35);z-index:4;text-shadow:none}
+nav .home{position:absolute;left:150px;bottom:12px;color:#f7ead2;text-decoration:none;font-weight:700;font-size:15px;padding:5px 12px;border:1.5px solid rgba(247,234,210,.5);border-radius:6px}
+nav .home:hover{background:rgba(255,255,255,.12)}
+@media (max-width:600px){nav .home{position:static;padding:5px 8px}}
+nav button{background:#f2efe6;color:#3a2a1a;border:none;border-radius:6px;padding:7px 16px;font-size:16px;cursor:pointer;font-family:var(--chalk-font);font-weight:700;
+  box-shadow:0 3px 0 #9d9584,0 4px 6px rgba(0,0,0,.35)}
+nav button:hover{background:#fff8d6}
+nav button:active{transform:translateY(2px);box-shadow:0 1px 0 #9d9584}
+#counter{min-width:5em;text-align:center;color:#f7ead2;font-variant-numeric:tabular-nums;font-weight:700}
+.sticks{position:absolute;left:22px;bottom:12px;display:flex;gap:8px;align-items:flex-end}
+.sticks i{display:block;width:46px;height:11px;border-radius:5px;box-shadow:0 2px 2px rgba(0,0,0,.35)}
+.sticks i:nth-child(1){background:#f6f4ec;transform:rotate(-4deg)}
+.sticks i:nth-child(2){background:#ffe27a;width:34px;transform:rotate(3deg)}
+.sticks i:nth-child(3){background:#ffb3c7;width:28px}
+.eraser{position:absolute;right:26px;bottom:10px;width:78px;height:24px;border-radius:4px;overflow:hidden;box-shadow:0 3px 4px rgba(0,0,0,.4);
+  background:linear-gradient(#3d5a80 0 55%,#d6d3c8 55%)}
+@media (max-width:600px){.sticks,.eraser{display:none}}
+@media print{
+  body{overflow:visible;background:var(--board)}
+  nav,#progress{display:none}
+  #board{position:fixed}
+  .slide{position:relative;inset:auto;display:block !important;page-break-after:always;min-height:100vh;animation:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- userSpaceOnUse region: straight axis lines have a zero-height bbox and would vanish otherwise -->
+  <filter id="chalk" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="chalk-soft" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+</svg>
+<div id="board"></div>
+<div id="progress"></div>
+
+<!-- 1 -->
+<section class="slide cover"><div class="cover-grid">
+  <div class="cover-left">
+    <div class="kicker">總體經濟學・第 4 章</div>
+    <h1>成長與政策</h1>
+    <p class="big-q" style="font-weight:400">政策能讓一個國家<br>變富嗎？</p>
+    <div class="chips">
+      <span class="chip">📅 今日主題：<b>成長與政策</b></span>
+      <span class="chip">🧹 值日生：<b>你</b></span>
+      <span class="chip">⏱️ 22 頁・約 20 分鐘</span>
+      <span class="chip">📚 建議先看：<b>第 3 章</b></span>
+    </div>
+    <p class="muted small hint">← → 方向鍵或下方按鈕換頁　｜　內容整理自本知識庫 wiki：第4章 成長與政策</p>
+  </div>
+  <div class="cover-right">
+    <svg class="doodle" viewBox="0 0 520 200" aria-hidden="true">
+      <line x1="20" y1="180" x2="392" y2="180" stroke="#f4f1e6" stroke-width="2.5"/>
+      <line x1="20" y1="180" x2="20" y2="8" stroke="#f4f1e6" stroke-width="2.5"/>
+      <path d="M24 172 C 150 170, 250 165, 300 120 S 360 40, 390 20" stroke="#ffe27a" stroke-width="4"/>
+      <path d="M24 150 C 70 120, 110 62, 160 58 S 270 108, 390 112" stroke="#8fd3f5" stroke-width="4"/>
+      <path d="M24 175 C 120 174, 220 172, 390 168" stroke="#ff9f8c" stroke-width="4" stroke-dasharray="9 8"/>
+      <text x="400" y="28" fill="#ffe27a" font-size="18" font-family="Microsoft JhengHei,sans-serif">中國 🚀</text>
+      <text x="400" y="118" fill="#8fd3f5" font-size="18" font-family="Microsoft JhengHei,sans-serif">阿根廷 📉</text>
+      <text x="400" y="172" fill="#ff9f8c" font-size="18" font-family="Microsoft JhengHei,sans-serif">迦納 😐</text>
+      <text x="30" y="20" fill="#b8c6b6" font-size="14" font-family="Microsoft JhengHei,sans-serif">人均 GDP（示意）</text>
+      <text x="350" y="198" fill="#b8c6b6" font-size="14" font-family="Microsoft JhengHei,sans-serif">時間</text>
+    </svg>
+    <div class="agenda">
+      <div class="agenda-title">今天的課程</div>
+      <ol>
+        <li><span class="num">1</span><span><b>Solow 哪裡不夠？</b><small>技術從哪來</small></span></li>
+        <li><span class="num">2</span><span><b>內生成長理論</b><small>AK 模型・外部效應</small></span></li>
+        <li><span class="num">3</span><span><b>誰說得對？</b><small>收斂・Barro 實證</small></span></li>
+        <li><span class="num">4</span><span><b>窮國為什麼卡住？</b><small>成長陷阱・貧窮陷阱</small></span></li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<!-- 2 -->
+<section class="slide"><div class="wrap">
+  <h2>世界上有四種國家</h2>
+  <div class="cols">
+    <div>
+      <p class="big-q" style="font-size:clamp(22px,2.8vw,34px)">「世界上有四種國家：<br>已開發國家、未開發國家、<br><span class="hl">日本</span>和<span class="hl">阿根廷</span>。」</p>
+      <p class="muted">——據說出自諾貝爾獎得主顧志耐（Simon Kuznets）<br><span class="small">The Economist, 2014-02-15 轉引</span></p>
+      <p>日本從落後變成富國，阿根廷從富國一路衰退，都是一般分類解釋不了的特例。</p>
+    </div>
+    <div>
+      <h3>阿根廷衰退的三個原因</h3>
+      <table>
+        <tr><th>原因</th><th>內容</th></tr>
+        <tr><td>① 外部衝擊</td><td>（簡報只列標題）</td></tr>
+        <tr><td>② 貿易政策</td><td style="text-align:left">二戰後走向<b>封閉經濟</b>（貝隆時期）；1946 年設外貿管制機構，貿易占 GDP 比例下降</td></tr>
+        <tr><td>③ 缺乏制度</td><td style="text-align:left">難以制定長期政策：總統可連任；2012 年石油公司 YPF 收歸國有</td></tr>
+      </table>
+    </div>
+  </div>
+</div></section>
+
+<!-- 3 -->
+<section class="slide"><div class="wrap">
+  <h2>今天要回答的問題</h2>
+  <p>第 3 章學到：長期所得由三個「旋鈕」決定。</p>
+  <div class="flow">
+    <div class="box in">🎛️ 儲蓄率 <span class="m"><i>s</i></span></div>
+    <div class="box out">🎛️ 人口成長率 <span class="m"><i>n</i></span></div>
+    <div class="box core">🎛️ 技術進步 <span class="m"><i>g</i></span></div>
+    <div class="arrow">→</div>
+    <div class="box">💰 長期所得</div>
+  </div>
+  <p class="big-q" style="text-align:center">這一章要問：<span class="hl">政策</span>能不能轉動這些旋鈕？</p>
+  <p class="muted" style="text-align:center">技術從哪裡來？窮國為什麼追不上？政府該把錢花在哪裡？</p>
+</div></section>
+
+<!-- 4 -->
+<section class="slide"><div class="wrap">
+  <h2>30 秒回顧 Solow 模型</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-mini"></svg></div>
+    <div>
+      <p>🪣 把每人資本想成水桶：</p>
+      <ul>
+        <li>流入：儲蓄 <span class="m"><i>s</i><i>f</i>(<i>k</i>)</span></li>
+        <li>流出：折舊＋人口稀釋 <span class="m">(<i>n</i>+<i>δ</i>)<i>k</i></span></li>
+      </ul>
+      <p>因為<b>邊際報酬遞減</b>，流入愈來愈慢，水位最後停在 <span class="m"><i>k</i>*</span>（穩態）。</p>
+      <p class="big-q" style="font-size:clamp(19px,2.4vw,26px)">結論：存更多錢只會讓所得<span class="hl">水準</span>變高，<br>長期<span class="hl">成長率</span>不變。</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 5 -->
+<section class="slide"><div class="wrap">
+  <h2>Solow 模型的兩個問題</h2>
+  <p>到了 1980 年代末，經濟學家對新古典成長理論很不滿意：</p>
+  <div class="cols">
+    <div class="card"><h3>❓ 問題一</h3><p class="big-q" style="font-size:clamp(20px,2.4vw,28px)">技術進步從哪裡來？</p><p>模型只說「長期成長靠技術」，卻把技術當成天上掉下來的（外生），沒有解釋它的經濟來源。</p></div>
+    <div class="card"><h3>❓ 問題二</h3><p class="big-q" style="font-size:clamp(20px,2.4vw,28px)">儲蓄為什麼不影響成長？</p><p>模型預測：在穩態下，儲蓄率和長期成長率<b>沒有關係</b>。真的是這樣嗎？</p></div>
+  </div>
+  <div class="note">無法解釋技術進步的來源；在穩態下提高 s 不能改變長期經濟成長率。</div>
+</div></section>
+
+<!-- 6 -->
+<section class="slide"><div class="wrap">
+  <h2>如果報酬不會遞減？</h2>
+  <div class="cols">
+    <div><svg class="chart" id="c-solow-a"></svg><p class="small muted" style="text-align:center">Solow：曲線愈來愈平，終會和漏水線相交 → 停在穩態 C</p></div>
+    <div><svg class="chart" id="c-ak"></svg><p class="small muted" style="text-align:center">AK：MPK 固定，全是直線，永遠在漏水線上方 → 一直成長</p></div>
+  </div>
+  <p><b>內生成長理論</b>（Romer、Lucas）：實體資本也許報酬遞減，但<span class="hl">知識資本</span>不一定。</p>
+  <div class="note">知識資本沒有遞減問題。</div>
+</div></section>
+
+<!-- 7 -->
+<section class="slide"><div class="wrap">
+  <h2>AK 模型：存錢決定成長速度</h2>
+  <div class="cols">
+    <div>
+      <div class="formula"><i>Y</i> = <i>a</i><i>K</i></div>
+      <p class="small muted" style="text-align:center"><span class="m"><i>a</i></span>＝資本的邊際產出，固定不變（先假設沒有人口成長和折舊）</p>
+      <div class="formula" style="font-size:clamp(20px,2.6vw,30px)">Δ<i>K</i> = <i>s</i><i>Y</i> = <i>s</i><i>a</i><i>K</i></div>
+      <div class="formula"><span class="frac"><span>Δ<i>Y</i></span><span><i>Y</i></span></span> = <i>s</i><i>a</i></div>
+    </div>
+    <div class="card">
+      <h3>💰 像利滾利的存款</h3>
+      <p>本金會生利息，利息又變成本金。每年存下的比例（<span class="m"><i>s</i></span>）愈高，本金長得愈快，而且<b>不會慢下來</b>。</p>
+      <p class="small muted">（比喻為補充）</p>
+      <p class="big-q" style="font-size:clamp(19px,2.3vw,25px)">儲蓄率愈高，<br><span class="hl">長期成長率</span>愈高</p>
+    </div>
+  </div>
+  <div class="note">在 AK 模型中，長期經濟成長由 s 決定。</div>
+</div></section>
+
+<!-- 8 -->
+<section class="slide"><div class="wrap">
+  <h2>問題來了：一家公司吃掉全世界？</h2>
+  <div class="flow">
+    <div class="box">只有資本的<br>報酬固定</div><div class="arrow">→</div>
+    <div class="box">所有投入加總<br><b>規模報酬遞增</b></div><div class="arrow">→</div>
+    <div class="box">公司愈大<br>愈有效率</div><div class="arrow">→</div>
+    <div class="box out">一家公司<br>獨占整個經濟 ✗</div>
+  </div>
+  <div class="cols">
+    <div class="card"><h3>規模報酬是什麼？</h3><p><b>所有</b>投入一起加倍，產出變幾倍。<br>邊際報酬則是只加<b>一種</b>投入。</p></div>
+    <div class="card"><h3>為什麼不合理？</h3><p>現實中沒有一家公司獨占全世界，所以必須排除「規模報酬遞增」這個可能。</p></div>
+  </div>
+  <div class="note">傳統微觀假設規模報酬不變；要避免規模報酬遞增。</div>
+</div></section>
+
+<!-- 9 -->
+<section class="slide"><div class="wrap">
+  <h2>Romer 的解法：外部效應</h2>
+  <div class="cols">
+    <div>
+      <p>Paul Romer 認為：一家公司<b>拿不到</b>投資的全部好處。</p>
+      <ul>
+        <li>公司增加資本 → 自己的產量增加</li>
+        <li><b>其他公司的生產力也跟著提高</b>（外溢）</li>
+        <li>每家公司自己的生產仍是規模報酬固定 → <span class="up">不會走向獨占</span></li>
+      </ul>
+      <p>整個經濟的資本報酬不遞減，靠的是外溢的部分。</p>
+    </div>
+    <div class="card">
+      <h3>🍞 麵包店的新食譜</h3>
+      <p>你的店發明了更好的烤法，產量大增。隔壁店看了也學會了，整條街都變有效率。</p>
+      <p class="small muted">（沿用第 3 章麵包店比喻，補充）</p>
+    </div>
+  </div>
+  <div class="note">外部效應。</div>
+</div></section>
+
+<!-- 10 -->
+<section class="slide"><div class="wrap">
+  <h2>私人報酬 vs 社會報酬</h2>
+  <table>
+    <tr><th>投資的成果</th><th>誰拿到好處</th><th>報酬類型</th></tr>
+    <tr><td>🔧 新機器</td><td>公司自己</td><td><b>私人報酬</b></td></tr>
+    <tr><td>💡 新技術、新想法</td><td>容易被複製，外溢給別人</td><td><b>社會報酬</b></td></tr>
+  </table>
+  <div class="cols" style="margin-top:18px">
+    <div class="card"><h3>實體資本</h3><p>外部報酬<b>不太合理</b>：機器的好處大多被買的人拿走。</p></div>
+    <div class="card"><h3>人力（知識）資本</h3><p>外部報酬<b>很合理</b>：</p><ol><li>新知識只有一部分被創造者拿走</li><li>想法會生出新想法 → <span class="hl">知識可以無限成長</span></li></ol></div>
+  </div>
+</div></section>
+
+<!-- 11 -->
+<section class="slide"><div class="wrap">
+  <h2>加入人口：g = sa − (n+δ)</h2>
+  <div class="formula" style="font-size:clamp(28px,4vw,48px)"><i>g</i> = <i>s</i><i>a</i> − (<i>n</i> + <i>δ</i>)</div>
+  <div class="icons">
+    <div class="icon"><div class="s">s</div><b class="up">↑ 推高成長</b><br><span class="small muted">儲蓄率</span></div>
+    <div class="icon"><div class="s">a</div><b class="up">↑ 推高成長</b><br><span class="small muted">資本的邊際產出</span></div>
+    <div class="icon"><div class="s">n</div><b class="down">↓ 拖慢成長</b><br><span class="small muted">人口成長率</span></div>
+    <div class="icon"><div class="s">δ</div><b class="down">↓ 拖慢成長</b><br><span class="small muted">折舊率</span></div>
+  </div>
+  <p style="margin-top:1em">做法：假設技術跟著每人資本一起成長（<span class="m"><i>A</i> = <i>α</i><i>k</i></span>），推導過程較難，這裡只看結論。</p>
+  <p class="small muted">🔣 這裡的 <span class="m"><i>g</i></span> 指人均成長率 Δ<i>y</i>/<i>y</i>；在這個模型中剛好也等於技術進步率。</p>
+  <div class="note">s 決定了 g。</div>
+</div></section>
+
+<!-- 12 -->
+<section class="slide"><div class="wrap">
+  <h2>窮國會追上富國嗎？</h2>
+  <div class="cols">
+    <div><svg class="chart" id="c-conv-abs"></svg><p class="small muted" style="text-align:center"><b>絕對收斂</b>：s、n 和技術都相同 → 走到<b>同一個</b>所得水準</p></div>
+    <div><svg class="chart" id="c-conv-cond"></svg><p class="small muted" style="text-align:center"><b>條件收斂</b>：s 或 n 不同 → 所得水準不同，<b>成長率</b>最終相同</p></div>
+  </div>
+  <p>新古典理論預測會收斂；<b>內生成長理論</b>則預測：高儲蓄率 → 一直比較高的成長率。</p>
+  <div class="note">穩態所得水準不同，但最終成長率會相同。</div>
+</div></section>
+
+<!-- 13 -->
+<section class="slide"><div class="wrap">
+  <h2>Barro 的實證</h2>
+  <p>經濟學家 Robert Barro 用各國資料檢驗兩種理論：</p>
+  <div class="flow">
+    <div class="box">① 投資高的國家<br>成長較快</div><div class="arrow">→</div>
+    <div class="box out">② 但影響<br>只是<b>暫時的</b></div><div class="arrow">→</div>
+    <div class="box">③ 最後所得較高<br>成長率<b>沒有</b>較高</div><div class="arrow">→</div>
+    <div class="box core">④ 各國呈現<br>條件收斂</div>
+  </div>
+  <p class="big-q" style="text-align:center;font-size:clamp(20px,2.6vw,30px)">結論：資料比較支持<span class="hl">新古典</span>；<br>內生成長理論不太適合解釋各國成長率的差異 🔀</p>
+  <div class="note">投資影響是暫時的；條件趨同。</div>
+</div></section>
+
+<!-- 14 -->
+<section class="slide"><div class="wrap">
+  <h2>總整理：新古典 vs 內生成長</h2>
+  <table>
+    <tr><th>面向</th><th>新古典（Solow）</th><th>內生成長（AK）</th></tr>
+    <tr><td>資本的邊際產出</td><td>遞減</td><td>固定</td></tr>
+    <tr><td>有沒有穩態</td><td>有</td><td>沒有，持續成長</td></tr>
+    <tr><td>技術從哪來</td><td>外生（不解釋）</td><td>內生（隨知識累積）</td></tr>
+    <tr><td>儲蓄率 <span class="m"><i>s</i></span>↑</td><td>只提高<b>水準</b></td><td>永久提高<b>成長率</b></td></tr>
+    <tr><td>長期人均成長率</td><td><span class="m"><i>g</i></span>（技術進步率）</td><td><span class="m"><i>s</i><i>a</i> − (<i>n</i>+<i>δ</i>)</span></td></tr>
+    <tr><td>Barro 實證</td><td class="up">較支持</td><td class="down">較不支持</td></tr>
+  </table>
+  <div class="cols" style="margin-top:16px">
+    <div class="card"><b>新古典：</b>存錢讓你更有錢，但不會讓你<b>更快</b>變有錢。</div>
+    <div class="card"><b>內生成長：</b>存錢（尤其投資知識）會讓你<b>一直更快</b>變有錢。</div>
+  </div>
+</div></section>
+
+<!-- 15 -->
+<section class="slide"><div class="wrap">
+  <h2>同一個世界，兩種命運</h2>
+  <div class="cols">
+    <div class="card"><h3>🇬🇭 迦納</h3><p class="big-q" style="font-size:clamp(20px,2.4vw,28px)">自 1900 年以來<br>幾乎沒有成長</p></div>
+    <div class="card"><h3>🇨🇳 中國</h3><p class="big-q" style="font-size:clamp(20px,2.4vw,28px)">近年<br>快速成長</p></div>
+  </div>
+  <p class="big-q" style="text-align:center;margin-top:1em;font-size:clamp(20px,2.6vw,30px)">需要一個模型，<span class="hl">同時</span>解釋<br>「零成長、低所得」和「高成長、高所得」</p>
+  <p style="text-align:center" class="muted">做法：把新古典和內生成長理論的元素結合起來</p>
+</div></section>
+
+<!-- 16 -->
+<section class="slide"><div class="wrap">
+  <h2>兩部門模型與成長陷阱</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-two"></svg></div>
+    <div>
+      <p>兩種投資機會：</p>
+      <ul>
+        <li>低所得：報酬<b>遞減</b>（像 Solow）</li>
+        <li>高所得：報酬<b>固定</b>（像 AK）</li>
+      </ul>
+      <p><b>A 點</b>：成長陷阱，附近的經濟都被拉回來。<br><b>越過 B 點</b>：一路持續成長。</p>
+      <div class="warn small">投資方向很重要：投資<b>研發</b> → 持續成長；投資<b>實體資本</b> → 短期產出高，長期成長低。</div>
+    </div>
+  </div>
+  <div class="note">很多開發中國家卡在這；必須靠研發和技術創新。</div>
+</div></section>
+
+<!-- 17 -->
+<section class="slide"><div class="wrap">
+  <h2>人口成長也會跟著所得變</h2>
+  <p>Solow 模型說：人口成長愈快，每人分到的資本愈少。但人口成長率本身也會隨所得改變，寫成 <span class="m"><i>n</i>(<i>y</i>)</span>：</p>
+  <table>
+    <tr><th>所得水準</th><th>出生率</th><th>死亡率</th><th>人口成長</th></tr>
+    <tr><td>非常貧窮</td><td>高</td><td>高</td><td>中等</td></tr>
+    <tr><td>所得上升</td><td>高</td><td class="down">下降</td><td class="down">上升</td></tr>
+    <tr><td>非常富裕</td><td class="up">下降</td><td>低</td><td>趨近零（ZPG）</td></tr>
+  </table>
+  <p style="margin-top:1em">變富的初期，死亡率先降、人口暴增，反而把資本稀釋掉。</p>
+  <div class="note">每人分到的 k 減少。</div>
+</div></section>
+
+<!-- 18 -->
+<section class="slide"><div class="wrap">
+  <h2>三個均衡與貧窮陷阱</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-ny"></svg></div>
+    <div>
+      <p>漏水線變成 <span class="m">[<i>n</i>(<i>y</i>)+<i>δ</i>]<i>k</i></span>，和儲蓄曲線交於三點：</p>
+      <ul>
+        <li><b>A</b>：<span class="down">貧窮陷阱</span>，人口成長高、所得低（穩定）</li>
+        <li><b>B</b>：分水嶺，經濟會往兩邊跑（不穩定）</li>
+        <li><b>C</b>：人口成長低、所得高（穩定）</li>
+      </ul>
+      <div class="card"><h3>🪨 卡在坑裡的石頭</h3><p>輕輕推一下，它會滾回坑底 A。要推過坑緣 B，才會一路滾向 C。<span class="small muted">（比喻為補充）</span></p></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 19 -->
+<section class="slide"><div class="wrap">
+  <h2>怎麼逃出陷阱？</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>方法一：大推力（big push）</h3>
+      <p>一口氣把所得推過 <b>B 點</b>，之後不用再推，經濟會自己走向高所得的 C。</p>
+      <p class="muted small">小推一把不夠：沒越過 B，就會被拉回 A。</p>
+    </div>
+    <div class="card">
+      <h3>方法二：移動曲線</h3>
+      <ul>
+        <li>提高<b>生產力</b>或<b>儲蓄率</b> → 儲蓄曲線上移</li>
+        <li><b>人口政策</b> → 漏水線下移</li>
+      </ul>
+      <p>兩條線不再於 A、B 相交，陷阱就消失了。</p>
+    </div>
+  </div>
+  <div class="note">降低 n。</div>
+</div></section>
+
+<!-- 20 -->
+<section class="slide"><div class="wrap">
+  <h2>迦納：Solow 模型就能解釋</h2>
+  <p>迦納大部分人口生活在<b>維生邊緣</b>。用最基本的 Solow 模型就能解釋：</p>
+  <div class="bars">
+    <div class="row"><div class="name">🇬🇭 迦納</div><div class="track"><div class="seg" style="width:23.25%;background:var(--accent)">9.3%</div></div><div class="total">9.3%</div></div>
+    <div class="row"><div class="name">🇯🇵 日本</div><div class="track"><div class="seg" style="width:85.75%;background:var(--green)">34.3%</div></div><div class="total">34.3%</div></div>
+    <div class="row"><div class="name">🇺🇸 美國</div><div class="track"><div class="seg" style="width:48.5%;background:var(--blue)">19.4%</div></div><div class="total">19.4%</div></div>
+  </div>
+  <p class="small muted">儲蓄占 GDP 比例（簡報未標示年份）</p>
+  <div class="cols">
+    <div class="card">低儲蓄 → 儲蓄曲線 <span class="m"><i>s</i><i>f</i>(<i>k</i>)</span> 很低</div>
+    <div class="card">高人口成長 → 漏水線 <span class="m">(<i>n</i>+<i>δ</i>)<i>k</i></span> 很陡</div>
+  </div>
+  <p class="big-q" style="text-align:center;font-size:clamp(19px,2.4vw,26px)">→ 穩態的每人所得和每人資本都很低</p>
+</div></section>
+
+<!-- 21 -->
+<section class="slide"><div class="wrap">
+  <h2>政策工具箱</h2>
+  <table>
+    <tr><th>政策</th><th>轉動哪個旋鈕</th><th>機制</th></tr>
+    <tr><td>投資研發（R&amp;D）</td><td><span class="m"><i>g</i>、<i>a</i></span></td><td>知識外溢，持續成長</td></tr>
+    <tr><td>投資人力資本（教育、訓練）</td><td><span class="m"><i>g</i>、<i>a</i></span></td><td>知識資本報酬不遞減</td></tr>
+    <tr><td>提高儲蓄率</td><td><span class="m"><i>s</i></span></td><td>儲蓄曲線上移</td></tr>
+    <tr><td>提高生產力</td><td><span class="m"><i>a</i>、<i>A</i></span></td><td>儲蓄曲線上移</td></tr>
+    <tr><td>人口政策</td><td><span class="m"><i>n</i></span></td><td>漏水線下移</td></tr>
+    <tr><td>大推力</td><td>所得水準</td><td>一次越過門檻 B</td></tr>
+    <tr><td>引進他國技術</td><td><span class="m"><i>A</i></span></td><td>不必自己發明</td></tr>
+  </table>
+  <div class="cols" style="margin-top:14px">
+    <div class="card"><b>富國：</b>靠發明與技術進步</div>
+    <div class="card"><b>窮國：</b>投資人力與實體資本、使用他國技術</div>
+  </div>
+</div></section>
+
+<!-- 22 -->
+<section class="slide"><div class="wrap">
+  <h2>回到阿根廷＋重點回顧</h2>
+  <div class="cols">
+    <div>
+      <h3>用工具箱看阿根廷</h3>
+      <div class="warn small"><b>延伸思考（非課堂內容）：</b>封閉貿易 → 難以引進他國技術；制度缺陷 → 長期政策難以延續。工具箱裡的旋鈕都轉不動。</div>
+      <h3 style="margin-top:.8em">五個重點</h3>
+      <ol>
+        <li>Solow 解釋不了技術從哪來、儲蓄為何不影響成長</li>
+        <li>AK 模型：報酬不遞減 → 儲蓄決定長期成長</li>
+        <li>外部效應化解了獨占難題</li>
+        <li>Barro 實證支持條件收斂</li>
+        <li>窮國可能卡在陷阱，靠大推力或移動曲線脫困</li>
+      </ol>
+    </div>
+    <div>
+      <h3>常見誤解</h3>
+      <ul>
+        <li>❌ 內生成長理論已經被證實了</li>
+        <li>❌ AK 模型的重點是資本很多</li>
+        <li>❌ 條件收斂＝大家所得水準相同</li>
+        <li>❌ 投資愈多一定愈好，投在哪都一樣</li>
+      </ul>
+      <p class="small muted">想深入看：wiki 的「內生成長模型 (AK 模型)」「新古典 vs 內生成長理論」「成長政策」頁</p>
+    </div>
+  </div>
+</div></section>
+
+<nav>
+  <span class="sticks" aria-hidden="true"><i></i><i></i><i></i></span>
+  <span class="eraser" aria-hidden="true"></span>
+  <a class="home" href="../index.html" aria-label="回到單元首頁">🏠 首頁</a>
+  <button id="prev" aria-label="上一頁">← 上一頁</button>
+  <span id="counter"></span>
+  <button id="next" aria-label="下一頁">下一頁 →</button>
+</nav>
+
+<script>
+// ---------- chart helper (inline SVG, no libraries) ----------
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function chart(id, cfg){
+  const svg = document.getElementById(id); if (!svg) return;
+  const W = cfg.w || 520, H = cfg.h || 360, L = 46, R = cfg.right || 92, T = 18, B = 40;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const x0 = cfg.xmin || 0, x1 = cfg.xmax || 1, y0 = cfg.ymin || 0, y1 = cfg.ymax || 1;
+  const X = x => L + (x - x0) / (x1 - x0) * (W - L - R);
+  const Y = y => H - B - (y - y0) / (y1 - y0) * (H - T - B);
+  const defs = el('defs', {}, svg);
+  const mk = el('marker', {id: id + '-arr', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse'}, defs);
+  el('path', {d: 'M0,0 L10,5 L0,10 z', fill: 'var(--accent)'}, mk);
+  // axes
+  el('line', {x1: L, y1: H - B, x2: W - R + 20, y2: H - B, class: 'axis'}, svg);
+  el('line', {x1: L, y1: T - 4, x2: L, y2: H - B, class: 'axis'}, svg);
+  if (cfg.xlabel) el('text', {x: W - R + 24, y: H - B + 5, class: 'lbl'}, svg, cfg.xlabel);
+  if (cfg.ylabel) el('text', {x: L - 8, y: T - 4, 'text-anchor': 'end', class: 'lbl'}, svg, cfg.ylabel);
+  (cfg.xticks || []).forEach(t => el('text', {x: X(t[0]), y: H - B + 18, 'text-anchor': 'middle', class: 'tick'}, svg, t[1]));
+  (cfg.yticks || []).forEach(t => el('text', {x: L - 6, y: Y(t[0]) + 4, 'text-anchor': 'end', class: 'tick'}, svg, t[1]));
+  (cfg.guides || []).forEach(g => el('line', {x1: X(g[0]), y1: Y(g[1]), x2: X(g[2]), y2: Y(g[3]), class: 'guide'}, svg));
+  (cfg.curves || []).forEach(c => {
+    const a = c.from !== undefined ? c.from : x0, b = c.to !== undefined ? c.to : x1, pts = [];
+    for (let i = 0; i <= 160; i++){ const x = a + (b - a) * i / 160, y = c.fn(x); if (y <= y1 * 1.01) pts.push(X(x).toFixed(1) + ',' + Y(y).toFixed(1)); }
+    el('polyline', {points: pts.join(' '), class: 'curve' + (c.dash ? ' dash' : ''), style: `stroke:var(--${c.color})`}, svg);
+    if (c.label){
+      const lx = c.lx !== undefined ? c.lx : b;
+      el('text', {x: X(lx) + 6, y: Y(c.fn(lx)) + 5 + (c.dy || 0), class: 'lbl', style: `fill:var(--${c.color})`}, svg, c.label);
+    }
+  });
+  (cfg.data || []).forEach(d => {
+    el('polyline', {points: d.pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' '), class: 'curve', style: `stroke:var(--${d.color})`}, svg);
+  });
+  (cfg.segs || []).forEach(s => el('line', {x1: X(s[0]), y1: Y(s[1]), x2: X(s[2]), y2: Y(s[3]), class: s[4] || 'step'}, svg));
+  (cfg.arrows || []).forEach(a => el('line', {x1: X(a[0]), y1: Y(a[1]), x2: X(a[2]), y2: Y(a[3]), stroke: 'var(--accent)', 'stroke-width': 2.5, 'marker-end': `url(#${id}-arr)`}, svg));
+  (cfg.points || []).forEach(p => {
+    el('circle', {cx: X(p[0]), cy: Y(p[1]), r: 5, class: 'pt', style: 'fill:var(--ink)'}, svg);
+    if (p[2]) el('text', {x: X(p[0]) + (p[3] || 8), y: Y(p[1]) + (p[4] || -8), class: 'lbl'}, svg, p[2]);
+  });
+  (cfg.texts || []).forEach(t => el('text', {x: X(t[0]), y: Y(t[1]), 'text-anchor': t[3] || 'start', class: t[4] || '', style: t[5] || ''}, svg, t[2]));
+}
+
+// ---------- chapter 4 charts (illustrative parameters) ----------
+const f = x => 0.9 * Math.sqrt(x);
+const s = 0.4, m = 0.4854, kStar = 0.55;
+
+chart('c-mini', {
+  xmax: 1, ymax: 1, xlabel: 'k', ylabel: 'y', right: 96, h: 300,
+  curves: [
+    {fn: f, color: 'blue', label: 'f(k)'},
+    {fn: x => s * f(x), color: 'green', label: 'sf(k) 流入', dy: 14},
+    {fn: x => m * x, color: 'accent', label: '(n+δ)k 流出', to: 1}
+  ],
+  guides: [[kStar, 0, kStar, m * kStar]],
+  points: [[kStar, m * kStar, 'C', 8, 18]],
+  arrows: [[.14, .025, .42, .025], [.97, .025, .7, .025]],
+  xticks: [[kStar, 'k*']]
+});
+
+chart('c-solow-a', {
+  xmax: 1, ymax: 1, xlabel: 'k', ylabel: 'y', right: 70, h: 300,
+  curves: [
+    {fn: f, color: 'blue', label: 'f(k)'},
+    {fn: x => s * f(x), color: 'green', label: 'sf(k)', dy: 14},
+    {fn: x => m * x, color: 'accent', label: '(n+δ)k', to: 1}
+  ],
+  guides: [[kStar, 0, kStar, m * kStar]],
+  points: [[kStar, m * kStar, 'C', 8, 18]],
+  xticks: [[kStar, 'k*']]
+});
+
+chart('c-ak', {
+  xmax: 1, ymax: 1, xlabel: 'k', ylabel: 'y', right: 70, h: 300,
+  curves: [
+    {fn: x => 0.95 * x, color: 'blue', label: 'f(k)', to: 1},
+    {fn: x => 0.62 * x, color: 'green', label: 'sf(k)', to: 1},
+    {fn: x => 0.38 * x, color: 'accent', label: '(n+δ)k', to: 1}
+  ],
+  segs: [[.8, .38 * .8, .8, .62 * .8, '']],
+  texts: [[.78, .4, '差距＝成長', 'end', 'tick']]
+});
+
+const T = 12;
+chart('c-conv-abs', {
+  xmax: T, ymin: 0, ymax: 1.2, xlabel: '時間', ylabel: '所得', right: 70, h: 260,
+  curves: [
+    {fn: t => .55 + .04 * t, color: 'yellow', label: '富國', to: T},
+    {fn: t => .55 + .04 * t - .4 * Math.exp(-t / 2.5), color: 'blue', label: '窮國', to: T, lx: 1.2, dy: 18}
+  ]
+});
+chart('c-conv-cond', {
+  xmax: T, ymin: 0, ymax: 1.2, xlabel: '時間', ylabel: '所得', right: 70, h: 260,
+  curves: [
+    {fn: t => .55 + .04 * t, color: 'yellow', label: '富國', to: T},
+    {fn: t => .35 + .04 * t - .2 * Math.exp(-t / 2.5), color: 'blue', label: '窮國', to: T}
+  ],
+  texts: [[T * .55, .3, '斜率（成長率）相同', 'middle', 'tick']]
+});
+
+// two-sector: concave then convex production function
+const f2 = x => 0.35 * Math.sqrt(x) + 1.2 * x * x * x;
+const s2 = 0.5, m2 = 0.45;
+const bis = (g, a, b) => { for (let i = 0; i < 60; i++) { const c = (a + b) / 2; (g(a) * g(c) <= 0) ? b = c : a = c; } return (a + b) / 2; };
+const gap2 = x => s2 * f2(x) - m2 * x;
+const kA2 = bis(gap2, 0.05, 0.3), kB2 = bis(gap2, 0.4, 0.8);
+chart('c-two', {
+  xmax: 0.85, ymax: 1.1, xlabel: 'k', ylabel: 'y', right: 80,
+  curves: [
+    {fn: f2, color: 'blue', label: 'f(k)'},
+    {fn: x => s2 * f2(x), color: 'green', label: 'sf(k)', dy: -4},
+    {fn: x => m2 * x, color: 'accent', label: '(n+δ)k', to: 0.85, dy: 14}
+  ],
+  guides: [[kA2, 0, kA2, m2 * kA2], [kB2, 0, kB2, m2 * kB2]],
+  points: [[kA2, m2 * kA2, 'A', -4, -12], [kB2, m2 * kB2, 'B', -18, -10]],
+  arrows: [[.02, .03, kA2 - .02, .03], [kB2 - .04, .03, kA2 + .03, .03], [kB2 + .03, .03, .82, .03]],
+  xticks: [[kA2, 'k*A'], [kB2, 'k*B']],
+  texts: [[(kA2 + kB2) / 2, .09, '拉回 A（陷阱）', 'middle', 'tick'], [.76, .09, '持續成長', 'middle', 'tick']]
+});
+
+// endogenous population: three equilibria A (stable), B (unstable), C (stable)
+const sf3 = x => 0.36 * Math.sqrt(x);
+const eA = .06, eB = .4, eC = .9;
+const req3 = x => sf3(x) + 2 * x * (x - eA) * (x - eB) * (x - eC);
+chart('c-ny', {
+  xmax: 1, ymax: .6, xlabel: 'k', ylabel: 'y', right: 110,
+  curves: [
+    {fn: sf3, color: 'green', label: 'sf(k)', dy: 16},
+    {fn: req3, color: 'accent', label: '[n(y)+δ]k', to: .96}
+  ],
+  guides: [[eA, 0, eA, sf3(eA)], [eB, 0, eB, sf3(eB)], [eC, 0, eC, sf3(eC)]],
+  points: [[eA, sf3(eA), 'A', -18, -8], [eB, sf3(eB), 'B', -6, -12], [eC, sf3(eC), 'C', -6, -12]],
+  arrows: [[.01, .02, eA - .015, .02], [eB - .02, .02, eA + .02, .02], [eB + .02, .02, eC - .03, .02], [.99, .02, eC + .03, .02]],
+  xticks: [[eA, 'k*A'], [eB, 'k*B'], [eC, 'k*C']]
+});
+
+// make highlighted segments (class '') visible
+document.querySelectorAll('svg.chart line').forEach(l => { if (l.getAttribute('class') === '') { l.setAttribute('stroke', 'var(--yellow)'); l.setAttribute('stroke-width', 4); } });
+
+// ---------- slide navigation ----------
+const slides = [...document.querySelectorAll('.slide')];
+const counter = document.getElementById('counter'), bar = document.getElementById('progress');
+let cur = 0;
+function show(i){
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+  slides[cur].scrollTop = 0;
+  counter.textContent = (cur + 1) + ' / ' + slides.length;
+  bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+  if (location.hash !== '#' + (cur + 1)) history.replaceState(null, '', '#' + (cur + 1));
+}
+document.getElementById('prev').onclick = () => show(cur - 1);
+document.getElementById('next').onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','PageDown',' ','Enter'].includes(e.key)) { e.preventDefault(); show(cur + 1); }
+  else if (['ArrowLeft','PageUp','Backspace'].includes(e.key)) { e.preventDefault(); show(cur - 1); }
+  else if (e.key === 'Home') show(0);
+  else if (e.key === 'End') show(slides.length - 1);
+});
+let tx = null;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive: true});
+document.addEventListener('touchend', e => {
+  if (tx === null) return; const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 60) show(cur + (dx < 0 ? 1 : -1)); tx = null;
+});
+show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+</script>
+</body>
+</html>

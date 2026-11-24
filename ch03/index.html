@@ -1,0 +1,763 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>成長與累積</title>
+<style>
+:root{
+  --board:#24402f; --card:#24402f; --ink:#f4f1e6; --muted:#b8c6b6; --line:rgba(244,241,230,.32);
+  --accent:#ff9f8c; --accent-soft:rgba(255,226,120,.14); --blue:#8fd3f5; --green:#c3ec8e; --gray:#d0d0c8;
+  --yellow:#ffe27a; --pink:#ffb3c7; --wood1:#a8743f; --wood2:#6e4826; --frame:14px;
+  --note:#f7e27a; --note-ink:#3a2f05; --axis:#e9e6da;
+  --chalk-font:"Segoe UI","Microsoft JhengHei","微軟正黑體","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:#3b2a1a; color:var(--ink); font-family:var(--chalk-font);
+  line-height:1.65; overflow:hidden;
+  text-shadow:0 0 1px rgba(255,255,255,.45),0 0 8px rgba(255,255,255,.08);
+}
+/* wooden frame + board surface */
+#board{
+  position:fixed; inset:0; border:var(--frame) solid var(--wood2);
+  border-image:linear-gradient(135deg,var(--wood1),var(--wood2) 40%,var(--wood1) 70%,var(--wood2)) 1;
+  background-color:var(--board);
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .07 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(ellipse 60% 40% at 25% 20%,rgba(255,255,255,.07),transparent 70%),
+    radial-gradient(ellipse 50% 30% at 75% 70%,rgba(255,255,255,.05),transparent 70%),
+    radial-gradient(ellipse 30% 18% at 60% 30%,rgba(255,255,255,.04),transparent 70%),
+    radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.35));
+  box-shadow:inset 0 0 40px rgba(0,0,0,.45);
+  z-index:0;
+}
+#progress{position:fixed;top:var(--frame);left:var(--frame);height:3px;background:var(--yellow);opacity:.8;transition:width .25s;z-index:5;filter:url(#chalk)}
+.slide{position:absolute;inset:var(--frame);bottom:calc(var(--frame) + 58px);display:none;overflow-y:auto;padding:36px 18px 28px;z-index:1}
+.slide.active{display:block;animation:write .45s ease}
+@keyframes write{from{opacity:0;filter:blur(2px)}to{opacity:1;filter:none}}
+.wrap{max-width:1360px;margin:0 auto}
+@media (min-width:1500px){p,li{font-size:23px}.formula{font-size:38px}}
+h1{font-size:clamp(36px,6vw,68px);line-height:1.2;margin:0 0 .3em;letter-spacing:.06em;filter:url(#chalk-soft)}
+h2{display:inline-block;font-size:clamp(26px,3.6vw,40px);line-height:1.3;margin:0 0 .7em;padding:0 .2em .15em;
+   border-bottom:3px solid var(--yellow);filter:url(#chalk-soft)}
+h3{font-size:clamp(19px,2.3vw,25px);margin:.2em 0 .4em;color:var(--yellow)}
+p,li{font-size:clamp(17px,2vw,22px)}
+ul,ol{padding-left:1.3em;margin:.3em 0}
+li{margin:.3em 0}
+li::marker{color:var(--yellow)}
+.kicker{color:var(--pink);font-weight:700;letter-spacing:.12em;font-size:clamp(15px,1.7vw,19px)}
+.muted{color:var(--muted)}
+.small{font-size:clamp(14px,1.5vw,16px)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.cols.wide-left{grid-template-columns:1.2fr 1fr}
+@media (max-width:760px){.cols,.cols.wide-left{grid-template-columns:1fr}}
+.card{background:rgba(255,255,255,.035);border:2px dashed rgba(244,241,230,.42);border-radius:14px 22px 12px 20px;padding:14px 20px}
+.big-q{font-size:clamp(24px,3.2vw,36px);font-weight:700;line-height:1.45}
+.hl{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.55);padding:0 .1em}
+/* sticky note pinned to the board */
+.note{position:relative;background:var(--note);color:var(--note-ink);text-shadow:none;border-radius:2px;
+  padding:14px 18px 12px;margin:20px 6px 4px;font-size:clamp(16px,1.8vw,20px);
+  box-shadow:3px 6px 14px rgba(0,0,0,.45);transform:rotate(-.8deg);
+  background-image:linear-gradient(transparent 0 85%,rgba(0,0,0,.05))}
+.note:nth-of-type(even){transform:rotate(.7deg)}
+.note::before{content:"📝 我的課堂筆記　";font-weight:700;color:#8a4b00}
+.note::after{content:"";position:absolute;top:-9px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#ff8a8a,#c0282d);box-shadow:1px 2px 3px rgba(0,0,0,.5)}
+.note i{color:inherit}
+.warn{border-left:4px solid var(--pink);background:rgba(255,179,199,.08);padding:10px 16px;border-radius:0 12px 12px 0;margin-top:14px}
+.formula{font-family:"Cambria Math","Times New Roman",serif;font-size:clamp(24px,3.2vw,36px);text-align:center;margin:.5em 0;white-space:nowrap;overflow-x:auto;color:#fffdf2;filter:url(#chalk-soft)}
+.formula i,.m i{font-style:italic}
+.m{font-family:"Cambria Math","Times New Roman",serif}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;margin:0 .12em;font-size:.9em}
+.frac>span:first-child{border-bottom:1.5px solid currentColor;padding:0 .15em}
+.frac>span:last-child{padding:0 .15em}
+table{border-collapse:collapse;width:100%;font-size:clamp(15px,1.8vw,20px)}
+th,td{border:1.5px solid var(--line);padding:7px 10px;text-align:center}
+th{color:var(--yellow);border-bottom:2px solid rgba(255,226,122,.6)}
+.up{color:var(--green);font-weight:700}.down{color:var(--accent);font-weight:700}
+.chart{width:100%;height:auto;display:block;background:rgba(0,0,0,.08);border:2px dashed rgba(244,241,230,.25);border-radius:16px 10px 18px 12px}
+.chart .axis{stroke:var(--axis);stroke-width:2;filter:url(#chalk)}
+.chart .curve{fill:none;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;filter:url(#chalk)}
+.chart .dash{stroke-dasharray:8 7}
+.chart .guide{stroke:var(--gray);stroke-width:1.2;stroke-dasharray:4 5;opacity:.75}
+.chart .step{stroke:var(--yellow);stroke-width:2.4;fill:none;filter:url(#chalk)}
+.chart text{fill:var(--ink);font-size:15px;font-family:var(--chalk-font)}
+.chart text.lbl{font-weight:700}
+.chart text.tick{fill:var(--muted);font-size:13px}
+.chart .pt{stroke:var(--board);stroke-width:2}
+.bars .row{display:flex;align-items:center;gap:10px;margin:12px 0}
+.bars .name{width:7.5em;flex:none;font-size:clamp(15px,1.7vw,18px)}
+.bars .track{flex:1;display:flex;height:36px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.07);border:1.5px dashed var(--line)}
+.bars .seg{display:flex;align-items:center;justify-content:center;color:#17261c;font-weight:700;text-shadow:none;font-size:14px;white-space:nowrap;opacity:.92}
+.bars .total{width:4.2em;flex:none;font-weight:700;text-align:right;color:var(--yellow)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:15px;margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:13px;height:13px;border-radius:3px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.flow{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0}
+.flow .box{background:rgba(255,255,255,.035);border:2px solid var(--line);border-radius:16px 10px 18px 12px;padding:10px 14px;text-align:center;font-size:clamp(16px,1.9vw,20px)}
+.flow .box.in{border-color:var(--green)}.flow .box.out{border-color:var(--accent)}.flow .box.core{border-color:var(--blue);font-weight:700}
+.flow .arrow{font-size:28px;color:var(--yellow)}
+.icons{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media (max-width:760px){.icons{grid-template-columns:repeat(2,1fr)}}
+.icon{border:2px dashed var(--line);border-radius:18px 12px 20px 10px;padding:12px;text-align:center}
+.icon .e{font-size:36px;text-shadow:none}
+.icon .s{font-family:"Cambria Math","Times New Roman",serif;font-size:30px;font-style:italic;font-weight:700;color:var(--yellow)}
+.title-slide{display:flex;flex-direction:column;justify-content:center;min-height:calc(100vh - 170px)}
+.corner{position:absolute;top:22px;right:28px;text-align:right;color:var(--muted);font-size:clamp(14px,1.6vw,18px);line-height:1.5;z-index:2}
+.corner b{color:var(--ink)}
+@media (max-width:700px){.corner{position:static;text-align:left;margin:0 auto 8px;max-width:1080px}}
+/* cover: two columns filling the whole board */
+.cover-grid{max-width:1500px;margin:0 auto;min-height:calc(100vh - 2*var(--frame) - 58px - 64px);
+  display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(24px,4vw,64px);align-items:center;padding:0 clamp(0px,2vw,32px)}
+.cover-left h1{font-size:clamp(44px,7vw,96px);margin:.1em 0 .25em}
+.cover-left .big-q{font-size:clamp(22px,2.8vw,38px)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:1.4em 0 1em}
+.chip{border:2px dashed var(--line);border-radius:999px;padding:6px 14px;font-size:clamp(14px,1.5vw,17px);color:var(--muted)}
+.chip b{color:var(--ink)}
+.hint{margin-top:1.6em}
+.cover-right{display:flex;flex-direction:column;gap:18px}
+.doodle{width:100%;border:2px dashed rgba(244,241,230,.25);border-radius:18px 12px 20px 10px;padding:12px;background:rgba(0,0,0,.08)}
+.agenda{border:2px solid rgba(255,226,122,.55);border-radius:14px 22px 12px 20px;padding:14px 20px;background:rgba(255,226,122,.05)}
+.agenda-title{color:var(--yellow);font-weight:700;font-size:clamp(17px,1.9vw,22px);margin-bottom:6px}
+.agenda ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 18px}
+.agenda li{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:clamp(15px,1.6vw,18px)}
+.agenda li small{display:block;color:var(--muted);font-size:.85em}
+.agenda .num{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--yellow);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-weight:700;filter:url(#chalk-soft)}
+@media (max-width:860px){.cover-grid{grid-template-columns:1fr;min-height:0}.agenda ol{grid-template-columns:1fr}}
+.doodle path,.doodle line{fill:none;stroke-linecap:round;filter:url(#chalk)}
+/* chalk tray with nav */
+nav{position:fixed;left:var(--frame);right:var(--frame);bottom:var(--frame);height:58px;display:flex;align-items:center;justify-content:center;gap:14px;padding:0 16px;
+  background:linear-gradient(#8a5c30,#6a4322 60%,#553519);border-top:3px solid #b9864f;box-shadow:0 -4px 10px rgba(0,0,0,.35);z-index:4;text-shadow:none}
+nav .home{position:absolute;left:150px;bottom:12px;color:#f7ead2;text-decoration:none;font-weight:700;font-size:15px;padding:5px 12px;border:1.5px solid rgba(247,234,210,.5);border-radius:6px}
+nav .home:hover{background:rgba(255,255,255,.12)}
+@media (max-width:600px){nav .home{position:static;padding:5px 8px}}
+nav button{background:#f2efe6;color:#3a2a1a;border:none;border-radius:6px;padding:7px 16px;font-size:16px;cursor:pointer;font-family:var(--chalk-font);font-weight:700;
+  box-shadow:0 3px 0 #9d9584,0 4px 6px rgba(0,0,0,.35)}
+nav button:hover{background:#fff8d6}
+nav button:active{transform:translateY(2px);box-shadow:0 1px 0 #9d9584}
+#counter{min-width:5em;text-align:center;color:#f7ead2;font-variant-numeric:tabular-nums;font-weight:700}
+.sticks{position:absolute;left:22px;bottom:12px;display:flex;gap:8px;align-items:flex-end}
+.sticks i{display:block;width:46px;height:11px;border-radius:5px;box-shadow:0 2px 2px rgba(0,0,0,.35)}
+.sticks i:nth-child(1){background:#f6f4ec;transform:rotate(-4deg)}
+.sticks i:nth-child(2){background:#ffe27a;width:34px;transform:rotate(3deg)}
+.sticks i:nth-child(3){background:#ffb3c7;width:28px}
+.eraser{position:absolute;right:26px;bottom:10px;width:78px;height:24px;border-radius:4px;overflow:hidden;box-shadow:0 3px 4px rgba(0,0,0,.4);
+  background:linear-gradient(#3d5a80 0 55%,#d6d3c8 55%)}
+@media (max-width:600px){.sticks,.eraser{display:none}}
+@media print{
+  body{overflow:visible;background:var(--board)}
+  nav,#progress{display:none}
+  #board{position:fixed}
+  .slide{position:relative;inset:auto;display:block !important;page-break-after:always;min-height:100vh;animation:none}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- userSpaceOnUse region: straight axis lines have a zero-height bbox and would vanish otherwise -->
+  <filter id="chalk" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G"/></filter>
+  <filter id="chalk-soft" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000"><feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="1" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" xChannelSelector="R" yChannelSelector="G"/></filter>
+</svg>
+<div id="board"></div>
+<div id="progress"></div>
+
+<!-- 1 -->
+<section class="slide cover"><div class="cover-grid">
+  <div class="cover-left">
+    <div class="kicker">總體經濟學・第 3 章</div>
+    <h1>成長與累積</h1>
+    <p class="big-q" style="font-weight:400">為什麼有些國家愈來愈富有，<br>有些卻停滯不前？</p>
+    <div class="chips">
+      <span class="chip">📅 今日主題：<b>經濟成長</b></span>
+      <span class="chip">🧹 值日生：<b>你</b></span>
+      <span class="chip">⏱️ 22 頁・約 20 分鐘</span>
+    </div>
+    <p class="muted small hint">← → 方向鍵或下方按鈕換頁　｜　內容整理自本知識庫 wiki：第3章 成長與累積</p>
+  </div>
+  <div class="cover-right">
+    <svg class="doodle" viewBox="0 0 520 200" aria-hidden="true">
+      <line x1="20" y1="180" x2="392" y2="180" stroke="#f4f1e6" stroke-width="2.5"/>
+      <line x1="20" y1="180" x2="20" y2="8" stroke="#f4f1e6" stroke-width="2.5"/>
+      <path d="M24 170 C 90 165, 140 150, 190 128 S 300 50, 390 22" stroke="#ffe27a" stroke-width="4"/>
+      <path d="M24 162 C 70 140, 110 62, 160 58 S 270 108, 390 112" stroke="#8fd3f5" stroke-width="4"/>
+      <path d="M24 174 C 120 172, 220 170, 390 160" stroke="#ff9f8c" stroke-width="4" stroke-dasharray="9 8"/>
+      <text x="400" y="28" fill="#ffe27a" font-size="18" font-family="Microsoft JhengHei,sans-serif">富國 📈</text>
+      <text x="400" y="118" fill="#8fd3f5" font-size="18" font-family="Microsoft JhengHei,sans-serif">阿根廷 🤔</text>
+      <text x="400" y="166" fill="#ff9f8c" font-size="18" font-family="Microsoft JhengHei,sans-serif">停滯 😐</text>
+      <text x="30" y="20" fill="#b8c6b6" font-size="14" font-family="Microsoft JhengHei,sans-serif">人均 GDP</text>
+      <text x="350" y="198" fill="#b8c6b6" font-size="14" font-family="Microsoft JhengHei,sans-serif">時間</text>
+    </svg>
+    <div class="agenda">
+      <div class="agenda-title">今天的課程</div>
+      <ol>
+        <li><span class="num">1</span><span><b>產出從哪裡來？</b><small>生產函數・人均 GDP</small></span></li>
+        <li><span class="num">2</span><span><b>過去的成長怎麼拆解？</b><small>成長核算・人力資本</small></span></li>
+        <li><span class="num">3</span><span><b>未來會成長到哪裡？</b><small>Solow 模型・穩態</small></span></li>
+        <li><span class="num">4</span><span><b>存多少錢最好？</b><small>黃金法則</small></span></li>
+      </ol>
+    </div>
+  </div>
+</div></section>
+
+<!-- 2 -->
+<section class="slide"><div class="wrap">
+  <h2>一個真實故事：阿根廷</h2>
+  <div class="cols wide-left">
+    <div>
+      <p>1914 年以前的 43 年間，阿根廷的 GDP 每年成長約 <b class="hl">6%</b>，是當時全世界最快的。</p>
+      <p>人均所得達到 16 個富國平均的 <b class="hl">92%</b>，首都蓋起了歌劇院和大車站。</p>
+      <p>接下來一百年卻一路下滑：</p>
+      <ul>
+        <li>1930–1976 年發生 6 次軍事政變</li>
+        <li>1970–80 年代反覆衰退</li>
+        <li>1989–90 年惡性通膨，2001 年爆發經濟危機</li>
+      </ul>
+      <p class="small muted">出處：The Economist, 2014-02-15，"A century of decline"</p>
+    </div>
+    <div>
+      <svg class="chart" id="c-arg"></svg>
+      <p class="small muted">阿根廷人均 GDP ÷ 美國人均 GDP（Maddison 資料，數值為從圖表目測的約值）</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 3 -->
+<section class="slide"><div class="wrap">
+  <h2>今天要回答的問題</h2>
+  <p class="big-q">一個國家的<span class="hl">長期生活水準</span>是由什麼決定的？</p>
+  <div class="flow">
+    <div class="box">① 產出從哪裡來？<br><span class="small muted">生產函數</span></div><div class="arrow">→</div>
+    <div class="box">② 過去的成長怎麼拆解？<br><span class="small muted">成長核算</span></div><div class="arrow">→</div>
+    <div class="box core">③ 未來會成長到哪裡？<br><span class="small muted">Solow 模型</span></div><div class="arrow">→</div>
+    <div class="box">④ 存多少錢最好？<br><span class="small muted">黃金法則</span></div>
+  </div>
+  <div class="note">成長核算是「拆解過去的貢獻」，成長理論是「解釋未來的累積」。</div>
+</div></section>
+
+<!-- 4 -->
+<section class="slide"><div class="wrap">
+  <h2>先認識四個符號</h2>
+  <p>用一家<b>麵包店</b>來比喻整個國家的經濟：</p>
+  <div class="icons">
+    <div class="icon"><div class="e">🍞</div><div class="s">Y</div><b>產出</b><br><span class="small muted">一年烤出的麵包總量（GDP）</span></div>
+    <div class="icon"><div class="e">🔥</div><div class="s">K</div><b>資本</b><br><span class="small muted">烤箱、機器、廠房</span></div>
+    <div class="icon"><div class="e">👩‍🍳</div><div class="s">N</div><b>勞動</b><br><span class="small muted">麵包師傅（人口、勞動力）</span></div>
+    <div class="icon"><div class="e">📖</div><div class="s">A</div><b>技術</b><br><span class="small muted">食譜和做法有多好（生產力）</span></div>
+  </div>
+  <p style="margin-top:1em">之後如果看到<b>小寫字母</b>，代表「平均每人」的量，例如 <span class="m"><i>y</i> = <i>Y</i>/<i>N</i></span>。</p>
+</div></section>
+
+<!-- 5 -->
+<section class="slide"><div class="wrap">
+  <h2>生產函數：產出從哪裡來</h2>
+  <div class="formula"><i>Y</i> = <i>A</i> · <i>F</i>(<i>K</i>, <i>N</i>)</div>
+  <p style="text-align:center" class="muted">產出 = 技術 × （用資本和勞動生產）</p>
+  <div class="cols">
+    <div class="card">
+      <h3>來源一：投入變多</h3>
+      <p>多買烤箱（<span class="m"><i>K</i></span>↑）、多請師傅（<span class="m"><i>N</i></span>↑），麵包就變多。</p>
+    </div>
+    <div class="card">
+      <h3>來源二：生產力提升</h3>
+      <p>人和烤箱都沒變，但食譜改良了（<span class="m"><i>A</i></span>↑），一樣能烤出更多麵包。</p>
+    </div>
+  </div>
+  <p class="small muted" style="margin-top:1em">假設：多一個師傅（MPN）或多一台烤箱（MPK），產出都會增加。</p>
+</div></section>
+
+<!-- 6 -->
+<section class="slide"><div class="wrap">
+  <h2>為什麼要看「平均每人」</h2>
+  <div class="cols">
+    <div>
+      <p>人口很多的國家，<b>總產出</b>可以很大，但每個人分到的還是很少。</p>
+      <p>所以衡量<b>生活水準</b>時，看的是<span class="hl">人均 GDP</span>：</p>
+      <div class="formula" style="font-size:clamp(20px,2.6vw,28px)"><i>y</i> = <span class="frac"><span><i>Y</i></span><span><i>N</i></span></span>　　<i>k</i> = <span class="frac"><span><i>K</i></span><span><i>N</i></span></span></div>
+      <p class="small muted"><span class="m"><i>k</i></span> 是每人資本，也叫「資本-勞動比」，可以想成每位師傅分到幾台烤箱。</p>
+    </div>
+    <div class="card">
+      <h3>成長率之間的關係</h3>
+      <p>人均成長率 = 總成長率 − 人口成長率</p>
+      <div class="formula" style="font-size:clamp(18px,2.3vw,26px)"><span class="frac"><span>Δ<i>y</i></span><span><i>y</i></span></span> = <span class="frac"><span>Δ<i>Y</i></span><span><i>Y</i></span></span> − <span class="frac"><span>Δ<i>N</i></span><span><i>N</i></span></span></div>
+      <p class="small muted">例：GDP 成長 3%、人口成長 1% → 平均每人只多了約 2%</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 7 -->
+<section class="slide"><div class="wrap">
+  <h2>成長核算：把成長拆開來看</h2>
+  <div class="formula" style="font-size:clamp(17px,2.4vw,28px)"><span class="frac"><span>Δ<i>Y</i></span><span><i>Y</i></span></span> = (1−<i>θ</i>)<span class="frac"><span>Δ<i>N</i></span><span><i>N</i></span></span> + <i>θ</i><span class="frac"><span>Δ<i>K</i></span><span><i>K</i></span></span> + <span class="frac"><span>Δ<i>A</i></span><span><i>A</i></span></span></div>
+  <div class="cols">
+    <div class="card"><p><b>白話：</b>產出成長 = 勞動的貢獻 + 資本的貢獻 + 技術的貢獻</p>
+      <p>每項投入的貢獻 = 它的成長率 × 它的<b>重要性權重</b></p></div>
+    <div class="card"><p><span class="m"><i>θ</i></span>（theta）= 資本拿走的所得比例</p>
+      <p><span class="m">1−<i>θ</i></span> = 勞動拿走的所得比例</p>
+      <p class="small muted">例如 <span class="m"><i>θ</i></span> = 0.25：國民所得中 25% 付給資本，75% 付給勞動</p></div>
+  </div>
+</div></section>
+
+<!-- 8 -->
+<section class="slide"><div class="wrap">
+  <h2>例題：多存機器 vs 多請人</h2>
+  <p>設 <span class="m"><i>θ</i></span> = 0.25，勞動成長 1.2%，資本成長 3%，技術進步 1.5%</p>
+  <div class="bars">
+    <div class="row"><div class="name">基準</div><div class="track">
+      <div class="seg" style="width:20%;background:var(--blue)">0.9</div>
+      <div class="seg" style="width:16.67%;background:var(--accent)">0.75</div>
+      <div class="seg" style="width:33.33%;background:var(--green)">1.5</div></div><div class="total">3.15%</div></div>
+    <div class="row"><div class="name">資本成長加倍</div><div class="track">
+      <div class="seg" style="width:20%;background:var(--blue)">0.9</div>
+      <div class="seg" style="width:33.33%;background:var(--accent)">1.5</div>
+      <div class="seg" style="width:33.33%;background:var(--green)">1.5</div></div><div class="total">3.9%</div></div>
+    <div class="row"><div class="name">勞動成長加倍</div><div class="track">
+      <div class="seg" style="width:40%;background:var(--blue)">1.8</div>
+      <div class="seg" style="width:16.67%;background:var(--accent)">0.75</div>
+      <div class="seg" style="width:33.33%;background:var(--green)">1.5</div></div><div class="total">4.05%</div></div>
+  </div>
+  <div class="legend"><span style="--c:var(--blue)">勞動 0.75 × 成長率</span><span style="--c:var(--accent)">資本 0.25 × 成長率</span><span style="--c:var(--green)">技術進步</span></div>
+  <div class="warn">資本成長率多了 3 個百分點，產出成長卻<b>只多 0.75 個百分點</b>（不到 1 個百分點）。原因是勞動的權重（0.75）比資本（0.25）大。</div>
+</div></section>
+
+<!-- 9 -->
+<section class="slide"><div class="wrap">
+  <h2>換成「平均每人」的版本</h2>
+  <p>把上一頁的公式兩邊都減掉人口成長率，就得到：</p>
+  <div class="formula"><span class="frac"><span>Δ<i>y</i></span><span><i>y</i></span></span> = <i>θ</i> <span class="frac"><span>Δ<i>k</i></span><span><i>k</i></span></span> + <span class="frac"><span>Δ<i>A</i></span><span><i>A</i></span></span></div>
+  <div class="cols">
+    <div class="card" style="text-align:center"><b>生活水準提升多少</b><br><span class="muted small">人均 GDP 成長率</span></div>
+    <div class="card" style="text-align:center"><b>＝ 每人機器增加多少 ＋ 技術提升多少</b></div>
+  </div>
+  <div class="note">左邊是「生活水準提升多少」，右邊是「機器增加多少」加上「技術提升多少」。</div>
+  <p class="small muted">勞動項不見了，不是因為勞動不重要，而是兩邊都扣掉了人口成長。</p>
+</div></section>
+
+<!-- 10 -->
+<section class="slide"><div class="wrap">
+  <h2>不只機器：人力資本</h2>
+  <div class="cols">
+    <div>
+      <p><b>人力資本（<span class="m"><i>H</i></span>）</b>是透過<b>教育</b>和<b>在職訓練</b>累積的知識與技能。</p>
+      <div class="formula" style="font-size:clamp(20px,2.6vw,30px)"><i>Y</i> = <i>A</i> · <i>F</i>(<i>K</i>, <i>H</i>, <i>N</i>)</div>
+      <p>Mankiw、Romer、Weil（1992）的研究指出：人力資本和機器、勞動一樣重要，三者的份額<b class="hl">各約 1/3</b>。</p>
+    </div>
+    <div class="card">
+      <h3>各國資料怎麼說</h3>
+      <ul>
+        <li>投資率愈高的國家，人均 GDP 愈高</li>
+        <li>平均受教育年數愈高的國家，人均 GDP 也愈高</li>
+      </ul>
+      <p class="small muted">美國、挪威、日本、新加坡、台灣位於右上方；迦納、孟加拉位於左下方（課本 Figure 3-2）。注意：這是相關，不一定是因果。</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 11 -->
+<section class="slide"><div class="wrap">
+  <h2>關鍵概念：邊際報酬遞減</h2>
+  <div class="cols">
+    <div>
+      <p>一位師傅從 1 台烤箱增加到 2 台，產量大增。</p>
+      <p>增加到第 10 台時，他根本顧不過來，多一台烤箱只多一點點麵包。</p>
+      <p class="big-q" style="font-size:clamp(19px,2.4vw,26px)">→ 資本愈多，<span class="hl">每多一單位資本帶來的產出愈少</span></p>
+      <p class="small muted">這就是「資本的邊際產出（MPK）遞減」，所以人均生產函數 <span class="m"><i>y</i> = <i>f</i>(<i>k</i>)</span> 會愈畫愈平。</p>
+    </div>
+    <div>
+      <svg class="chart" id="c-dim"></svg>
+      <p class="small muted">每多 0.2 單位資本，產出增加的幅度（橘色階梯）愈來愈小</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 12 -->
+<section class="slide"><div class="wrap">
+  <h2>Solow 模型的核心想法</h2>
+  <p class="muted">Robert Solow 提出的「新古典成長模型」，重點在資本怎麼累積。</p>
+  <div class="note">儲蓄決定投資，投資決定資本。</div>
+  <p style="margin-top:1em">把<b>每人資本 <span class="m"><i>k</i></span></b> 想成一個<b>會漏水的水桶</b>：</p>
+  <div class="flow">
+    <div class="box in">💧 流入<br><b>儲蓄（= 投資）</b><br><span class="m"><i>s</i>·<i>f</i>(<i>k</i>)</span></div>
+    <div class="arrow">→</div>
+    <div class="box core">🪣 水桶<br>每人資本 <span class="m"><i>k</i></span></div>
+    <div class="arrow">→</div>
+    <div class="box out">🕳️ 流出<br><b>折舊 + 人口稀釋</b><br><span class="m">(<i>n</i>+<i>δ</i>)<i>k</i></span></div>
+  </div>
+  <div class="formula" style="font-size:clamp(20px,2.6vw,30px)">Δ<i>k</i> = <i>s</i><i>f</i>(<i>k</i>) − (<i>n</i>+<i>δ</i>)<i>k</i></div>
+  <p class="small muted" style="text-align:center"><span class="m"><i>s</i></span> = 儲蓄率（所得中存下來的比例）　<span class="m"><i>n</i></span> = 人口成長率　<span class="m"><i>δ</i></span> = 折舊率</p>
+</div></section>
+
+<!-- 13 -->
+<section class="slide"><div class="wrap">
+  <h2>水桶為什麼會漏水？損益兩平投資</h2>
+  <div class="cols">
+    <div class="card">
+      <h3>漏洞一：折舊 <span class="m"><i>δk</i></span></h3>
+      <p>烤箱會老、會壞，每年都要花錢汰換。</p>
+    </div>
+    <div class="card">
+      <h3>漏洞二：人口稀釋 <span class="m"><i>nk</i></span></h3>
+      <p>新師傅加入，也要幫他配烤箱；不然同樣的烤箱被更多人分掉，每人分到的就變少。</p>
+    </div>
+  </div>
+  <p style="margin-top:1em">兩個加起來 <span class="m">(<i>n</i>+<i>δ</i>)<i>k</i></span>，就是<b class="hl">維持每人資本不變</b>至少要投資的金額。</p>
+  <p>它有三個名字：<b>損益兩平投資</b>、<b>必要投資</b>、<b>維持人均資本恆定所需的投資</b>。</p>
+</div></section>
+
+<!-- 14 -->
+<section class="slide"><div class="wrap">
+  <h2>穩態：水桶的水位不再變動</h2>
+  <div class="cols wide-left">
+    <div>
+      <svg class="chart" id="c-solow"></svg>
+    </div>
+    <div>
+      <p>在 <span class="m"><i>k</i>*</span> 左邊：流入 &gt; 流出，<span class="m"><i>k</i></span> <span class="up">增加</span>。</p>
+      <p>在 <span class="m"><i>k</i>*</span> 右邊：流入 &lt; 流出，<span class="m"><i>k</i></span> <span class="down">減少</span>。</p>
+      <p>不管從哪邊出發，最後都會停在交點 <b>C</b>：</p>
+      <div class="formula" style="font-size:clamp(18px,2.3vw,26px)"><i>s</i><i>f</i>(<i>k</i>*) = (<i>n</i>+<i>δ</i>)<i>k</i>*</div>
+      <p>這個狀態叫<b class="hl">穩態</b>（steady state），對應的人均所得是 <span class="m"><i>y</i>*</span>（點 D）。</p>
+    </div>
+  </div>
+  <div class="note">資本增加 → 邊際報酬遞減 → 新增的資本只夠抵銷折舊和新增人口 → <i>k</i> 不再增加。</div>
+</div></section>
+
+<!-- 15 -->
+<section class="slide"><div class="wrap">
+  <h2>穩態不是「不成長」</h2>
+  <table>
+    <tr><th>變數</th><th>穩態時的成長率</th><th>說明</th></tr>
+    <tr><td>每人資本 <span class="m"><i>k</i></span>、每人所得 <span class="m"><i>y</i></span></td><td><b>0</b></td><td>平均每人不再變多</td></tr>
+    <tr><td>總產出 <span class="m"><i>Y</i></span></td><td><b><span class="m"><i>n</i></span></b>（人口成長率）</td><td>人變多，總量就跟著變多</td></tr>
+  </table>
+  <div class="note">穩態時 Δ<i>y</i> = 0，所以總產出成長率 Δ<i>Y</i>/<i>Y</i> = Δ<i>N</i>/<i>N</i> = <i>n</i>。</div>
+  <h3 style="margin-top:1em">收斂</h3>
+  <p>儲蓄率、人口成長率、技術都一樣的國家，最後會走到<b>同一個</b>穩態，所得也就收斂到相同水準，只是過程可能很慢。</p>
+  <p class="small muted">例：1950–1973 年戰後資本很少的日本，人均 GDP 每年成長 8.01%，美國只有 2.42%（Maddison 資料）。</p>
+</div></section>
+
+<!-- 16 -->
+<section class="slide"><div class="wrap">
+  <h2>如果大家更會存錢？（儲蓄率 <span class="m"><i>s</i></span>↑）</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-sup"></svg></div>
+    <div>
+      <ol>
+        <li>儲蓄曲線往上移（虛線）</li>
+        <li>在原本的 <span class="m"><i>k</i>*</span>，流入 &gt; 流出</li>
+        <li>資本增加，直到新的穩態 <span class="m"><i>k</i>**</span>（點 C′）</li>
+      </ol>
+      <p class="big-q" style="font-size:clamp(19px,2.4vw,26px)">結果：<span class="up">所得水準</span>變高了，<br>但<span class="down">長期成長率</span>沒變。</p>
+    </div>
+  </div>
+  <div class="note">s 只能提高所得水準 y，長期成長率由 n 決定。原因是資本邊際報酬遞減。</div>
+</div></section>
+
+<!-- 17 -->
+<section class="slide"><div class="wrap">
+  <h2>過渡期：成長只會暫時加速</h2>
+  <div class="cols">
+    <div><svg class="chart" id="c-ty"></svg><p class="small muted" style="text-align:center">(a) 人均所得：從 <span class="m"><i>y</i>*</span> 慢慢升到 <span class="m"><i>y</i>**</span></p></div>
+    <div><svg class="chart" id="c-tg"></svg><p class="small muted" style="text-align:center">(b) 總產出成長率：先跳高，再慢慢回到 <span class="m"><i>n</i></span></p></div>
+  </div>
+  <p>在 <span class="m"><i>t</i><sub>0</sub></span> 到 <span class="m"><i>t</i><sub>1</sub></span> 的<b>過渡期</b>，資本累積得比人口和折舊快，成長率暫時上升。之後成長率回到原本的人口成長率。</p>
+  <div class="note">在過渡期資本快速累積，每人平均產出成長率會增加；最終成長率會回到原本的人口成長率。</div>
+</div></section>
+
+<!-- 18 -->
+<section class="slide"><div class="wrap">
+  <h2>如果人口成長更快？（<span class="m"><i>n</i></span>↑）</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-nup"></svg></div>
+    <div>
+      <p>漏水變大：<span class="m">(<i>n</i>+<i>δ</i>)<i>k</i></span> 這條線<b>變陡</b>。</p>
+      <ul>
+        <li>穩態 <span class="m"><i>k</i>*</span>、<span class="m"><i>y</i>*</span> <span class="down">下降</span>：每人分到的資本變少</li>
+        <li>總產出成長率 <span class="up">上升</span>：穩態時總產出以 <span class="m"><i>n</i></span> 成長</li>
+      </ul>
+      <p class="small muted">人口成長快導致人均所得偏低，這在許多開發中國家都觀察得到。</p>
+      <div class="warn">分辨清楚：<span class="m"><i>s</i></span> 變動是<b>曲線</b>移動；<span class="m"><i>n</i></span>、<span class="m"><i>δ</i></span> 變動是<b>直線</b>旋轉。</div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 19 -->
+<section class="slide"><div class="wrap">
+  <h2>技術進步：唯一的長期引擎</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-tech"></svg></div>
+    <div>
+      <p>技術每年進步 <span class="m"><i>g</i> = Δ<i>A</i>/<i>A</i></span>，生產函數和儲蓄曲線就<b>每年往上移</b>。</p>
+      <p>穩態跟著一路往右上走：<span class="m"><i>k</i>*<sub>0</sub> → <i>k</i>*<sub>1</sub> → <i>k</i>*<sub>2</sub></span></p>
+      <p class="big-q" style="font-size:clamp(19px,2.4vw,26px)">長期人均所得的成長率 = <span class="hl">技術進步率 <span class="m"><i>g</i></span></span></p>
+      <p class="small muted">限制：模型假設 <span class="m"><i>g</i></span> 是外生的，沒有解釋技術從哪裡來。</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 20 -->
+<section class="slide"><div class="wrap">
+  <h2>黃金法則：存太多也不好</h2>
+  <div class="cols wide-left">
+    <div><svg class="chart" id="c-gold"></svg></div>
+    <div>
+      <p>我們真正在乎的是<b>能消費多少</b>：<span class="m"><i>c</i> = (1−<i>s</i>)<i>y</i></span></p>
+      <ul>
+        <li>存得多 → 現在能花的比例變少 <span class="down">↓</span></li>
+        <li>存得多 → 資本多、所得高 <span class="up">↑</span></li>
+      </ul>
+      <p>兩股力量拉扯，存在一個讓穩態消費<b>最大</b>的儲蓄率 <span class="m"><i>s<sub>g</sub></i></span>，條件是：</p>
+      <div class="formula" style="font-size:clamp(20px,2.6vw,30px)">MPK = <i>n</i> + <i>δ</i></div>
+    </div>
+  </div>
+  <div class="note">MPK 是多一單位資本能多生產多少；n+δ 是多維護一單位機器要付出多少成本。</div>
+</div></section>
+
+<!-- 21 -->
+<section class="slide"><div class="wrap">
+  <h2>總整理：三個參數的效果</h2>
+  <table>
+    <tr><th>變動</th><th>圖上的移動</th><th>人均所得水準 <span class="m"><i>y</i>*</span></th><th>長期人均成長率</th><th>長期總產出成長率</th></tr>
+    <tr><td>儲蓄率 <span class="m"><i>s</i></span>↑</td><td>儲蓄曲線上移</td><td class="up">↑</td><td>不變（0）</td><td>不變（<span class="m"><i>n</i></span>）</td></tr>
+    <tr><td>人口成長 <span class="m"><i>n</i></span>↑</td><td>直線變陡</td><td class="down">↓</td><td>不變（0）</td><td class="up">↑</td></tr>
+    <tr><td>折舊率 <span class="m"><i>δ</i></span>↑</td><td>直線變陡</td><td class="down">↓</td><td>不變（0）</td><td>不變（<span class="m"><i>n</i></span>）</td></tr>
+    <tr><td>技術進步 <span class="m"><i>g</i></span></td><td>曲線持續上移</td><td class="up">持續↑</td><td class="up"><span class="m"><i>g</i></span></td><td class="up"><span class="m"><i>n</i>+<i>g</i></span></td></tr>
+  </table>
+  <p class="small muted">折舊率這一列由模型推導（補充），簡報未直接列出。</p>
+</div></section>
+
+<!-- 22 -->
+<section class="slide"><div class="wrap">
+  <h2>回到阿根廷＋重點回顧</h2>
+  <div class="cols">
+    <div>
+      <h3>用兩個工具重新看阿根廷</h3>
+      <ul>
+        <li><b>成長核算</b>：停滯是勞動、資本，還是技術出了問題？</li>
+        <li><b>Solow 模型</b>：儲蓄、人口、技術如何決定長期所得？</li>
+      </ul>
+      <div class="warn small"><b>延伸思考（非課堂內容）：</b>政變和惡性通膨讓人不敢儲蓄、不敢投資，也拖累生產效率（<span class="m"><i>A</i></span>），穩態所得和長期成長都受傷。</div>
+      <p><b>啟示：</b>曾經富有不保證一直富有，收斂不是必然的。</p>
+      <h3 style="margin-top:.8em">五個重點</h3>
+      <ol>
+        <li>產出來自投入（<span class="m"><i>K</i>, <i>N</i>, <i>H</i></span>）和技術（<span class="m"><i>A</i></span>）</li>
+        <li>成長核算：用所得份額加權，拆解成長來源</li>
+        <li>因為邊際報酬遞減，經濟會走向穩態</li>
+        <li>儲蓄只影響所得<b>水準</b>，不影響長期<b>成長率</b></li>
+        <li>長期人均成長只能靠技術進步</li>
+      </ol>
+    </div>
+    <div>
+      <h3>常見誤解</h3>
+      <ul>
+        <li>❌ 提高儲蓄率能讓成長率永久提高</li>
+        <li>❌ 人口成長變快，總產出成長率會下降</li>
+        <li>❌ 穩態代表經濟完全不成長</li>
+        <li>❌ 儲蓄率愈高，大家就能消費愈多</li>
+      </ul>
+      <p class="small muted">每一條為什麼錯，可以回頭對照第 15–21 頁。</p>
+      <p class="small muted">想深入看：wiki 的「Solow 新古典成長模型」「s、n、g 變動效果比較」「黃金法則」頁</p>
+    </div>
+  </div>
+</div></section>
+
+<nav>
+  <span class="sticks" aria-hidden="true"><i></i><i></i><i></i></span>
+  <span class="eraser" aria-hidden="true"></span>
+  <a class="home" href="../index.html" aria-label="回到單元首頁">🏠 首頁</a>
+  <button id="prev" aria-label="上一頁">← 上一頁</button>
+  <span id="counter"></span>
+  <button id="next" aria-label="下一頁">下一頁 →</button>
+</nav>
+
+<script>
+// ---------- chart helper (inline SVG, no libraries) ----------
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent, text){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function chart(id, cfg){
+  const svg = document.getElementById(id); if (!svg) return;
+  const W = cfg.w || 520, H = cfg.h || 360, L = 46, R = cfg.right || 92, T = 18, B = 40;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const x0 = cfg.xmin || 0, x1 = cfg.xmax || 1, y0 = cfg.ymin || 0, y1 = cfg.ymax || 1;
+  const X = x => L + (x - x0) / (x1 - x0) * (W - L - R);
+  const Y = y => H - B - (y - y0) / (y1 - y0) * (H - T - B);
+  const defs = el('defs', {}, svg);
+  const mk = el('marker', {id: id + '-arr', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse'}, defs);
+  el('path', {d: 'M0,0 L10,5 L0,10 z', fill: 'var(--accent)'}, mk);
+  // axes
+  el('line', {x1: L, y1: H - B, x2: W - R + 20, y2: H - B, class: 'axis'}, svg);
+  el('line', {x1: L, y1: T - 4, x2: L, y2: H - B, class: 'axis'}, svg);
+  if (cfg.xlabel) el('text', {x: W - R + 24, y: H - B + 5, class: 'lbl'}, svg, cfg.xlabel);
+  if (cfg.ylabel) el('text', {x: L - 8, y: T - 4, 'text-anchor': 'end', class: 'lbl'}, svg, cfg.ylabel);
+  (cfg.xticks || []).forEach(t => el('text', {x: X(t[0]), y: H - B + 18, 'text-anchor': 'middle', class: 'tick'}, svg, t[1]));
+  (cfg.yticks || []).forEach(t => el('text', {x: L - 6, y: Y(t[0]) + 4, 'text-anchor': 'end', class: 'tick'}, svg, t[1]));
+  (cfg.guides || []).forEach(g => el('line', {x1: X(g[0]), y1: Y(g[1]), x2: X(g[2]), y2: Y(g[3]), class: 'guide'}, svg));
+  (cfg.curves || []).forEach(c => {
+    const a = c.from !== undefined ? c.from : x0, b = c.to !== undefined ? c.to : x1, pts = [];
+    for (let i = 0; i <= 160; i++){ const x = a + (b - a) * i / 160, y = c.fn(x); if (y <= y1 * 1.01) pts.push(X(x).toFixed(1) + ',' + Y(y).toFixed(1)); }
+    el('polyline', {points: pts.join(' '), class: 'curve' + (c.dash ? ' dash' : ''), style: `stroke:var(--${c.color})`}, svg);
+    if (c.label){
+      const lx = c.lx !== undefined ? c.lx : b;
+      el('text', {x: X(lx) + 6, y: Y(c.fn(lx)) + 5 + (c.dy || 0), class: 'lbl', style: `fill:var(--${c.color})`}, svg, c.label);
+    }
+  });
+  (cfg.data || []).forEach(d => {
+    el('polyline', {points: d.pts.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' '), class: 'curve', style: `stroke:var(--${d.color})`}, svg);
+  });
+  (cfg.segs || []).forEach(s => el('line', {x1: X(s[0]), y1: Y(s[1]), x2: X(s[2]), y2: Y(s[3]), class: s[4] || 'step'}, svg));
+  (cfg.arrows || []).forEach(a => el('line', {x1: X(a[0]), y1: Y(a[1]), x2: X(a[2]), y2: Y(a[3]), stroke: 'var(--accent)', 'stroke-width': 2.5, 'marker-end': `url(#${id}-arr)`}, svg));
+  (cfg.points || []).forEach(p => {
+    el('circle', {cx: X(p[0]), cy: Y(p[1]), r: 5, class: 'pt', style: 'fill:var(--ink)'}, svg);
+    if (p[2]) el('text', {x: X(p[0]) + (p[3] || 8), y: Y(p[1]) + (p[4] || -8), class: 'lbl'}, svg, p[2]);
+  });
+  (cfg.texts || []).forEach(t => el('text', {x: X(t[0]), y: Y(t[1]), 'text-anchor': t[3] || 'start', class: t[4] || '', style: t[5] || ''}, svg, t[2]));
+}
+
+// ---------- model functions (illustrative parameters) ----------
+const f = x => 0.9 * Math.sqrt(x);
+const s = 0.4, s2 = 0.52, m = 0.4854, m2 = 0.65;   // m = n+δ
+const kStar = 0.55, kStar2 = Math.pow(s2 * 0.9 / m, 2), kN = Math.pow(s * 0.9 / m2, 2);
+
+chart('c-arg', {
+  xmin: 1870, xmax: 2020, ymin: 0, ymax: 1.2, right: 30, ylabel: '倍',
+  xticks: [[1875,'1875'],[1900,'1900'],[1925,'1925'],[1950,'1950'],[1975,'1975'],[2000,'2000']],
+  yticks: [[0,'0'],[0.5,'0.5'],[1,'1.0']],
+  guides: [[1870,1,2020,1]],
+  data: [{color: 'blue', pts: [[1875,.65],[1880,.55],[1885,.75],[1890,.8],[1895,1.05],[1900,.78],[1910,.8],[1920,.62],[1930,.78],[1935,.65],[1945,.45],[1950,.55],[1960,.47],[1970,.48],[1975,.5],[1980,.43],[1990,.28],[1998,.34],[2002,.25],[2010,.36],[2015,.32]]}],
+  texts: [[1960,1.05,'= 和美國一樣富',  'start','tick'],[1895,1.12,'高峰','middle','lbl'],[2002,.16,'2001 危機','middle','tick']]
+});
+
+chart('c-dim', {
+  xmax: 1, ymax: 1, xlabel: 'k', ylabel: 'y',
+  curves: [{fn: f, color: 'blue', label: 'y = f(k)', lx: 1, dy: 0}],
+  segs: [[.1,f(.1),.3,f(.1)],[.3,f(.1),.3,f(.3)],[.3,f(.3),.5,f(.3)],[.5,f(.3),.5,f(.5)],[.5,f(.5),.7,f(.5)],[.7,f(.5),.7,f(.7)],[.7,f(.7),.9,f(.7)],[.9,f(.7),.9,f(.9)]],
+  texts: [[.31,(f(.1)+f(.3))/2,'+0.21'],[.51,(f(.3)+f(.5))/2,'+0.14'],[.71,(f(.5)+f(.7))/2,'+0.12'],[.91,(f(.7)+f(.9))/2,'+0.10']]
+});
+
+chart('c-solow', {
+  xmax: 1, ymax: 1, xlabel: 'k', ylabel: 'y', right: 96,
+  curves: [
+    {fn: f, color: 'blue', label: 'f(k)'},
+    {fn: x => s * f(x), color: 'green', label: 'sf(k) 流入', dy: 14},
+    {fn: x => m * x, color: 'accent', label: '(n+δ)k 流出', to: 1}
+  ],
+  guides: [[kStar,0,kStar,f(kStar)],[0,f(kStar),kStar,f(kStar)]],
+  points: [[kStar, m * kStar, 'C', 8, 18],[kStar, f(kStar), 'D', -4, -10]],
+  arrows: [[.14,.025,.42,.025],[.97,.025,.7,.025]],
+  xticks: [[kStar,'k*']], yticks: [[f(kStar),'y*']],
+  texts: [[.3,.06,'k 增加','middle','tick'],[.84,.06,'k 減少','middle','tick']]
+});
+
+chart('c-sup', {
+  xmax: 1.05, ymax: 1, xlabel: 'k', ylabel: 'y', right: 80,
+  curves: [
+    {fn: f, color: 'blue', label: 'f(k)', to: 1.05},
+    {fn: x => s2 * f(x), color: 'green', dash: true, label: "s'f(k)", to: 1.05, lx: .3, dy: -14},
+    {fn: x => s * f(x), color: 'green', label: 'sf(k)', to: 1.05, dy: 8},
+    {fn: x => m * x, color: 'accent', label: '(n+δ)k', to: 1.05, lx: .3, dy: 22}
+  ],
+  guides: [[kStar,0,kStar,m*kStar],[kStar2,0,kStar2,m*kStar2]],
+  points: [[kStar, m * kStar, 'C', 8, 18],[kStar2, m * kStar2, "C′", -10, -14]],
+  arrows: [[kStar + .03,.04,kStar2 - .03,.04]],
+  xticks: [[kStar,'k*'],[kStar2,'k**']]
+});
+
+const t0 = 3, yPath = t => t < t0 ? .45 : .45 + .35 * (1 - Math.exp(-(t - t0) / 1.6));
+chart('c-ty', {
+  xmax: 12, ymax: 1, h: 260, right: 40, xlabel: '時間', ylabel: 'y',
+  curves: [{fn: yPath, color: 'blue', to: 12}],
+  guides: [[0,.8,12,.8],[t0,0,t0,.45]],
+  xticks: [[t0,'t₀'],[8.5,'t₁']], yticks: [[.45,'y*'],[.8,'y**']]
+});
+chart('c-tg', {
+  xmax: 12, ymax: 1, h: 260, right: 40, xlabel: '時間', ylabel: 'ΔY/Y',
+  curves: [{fn: t => t < t0 ? .3 : .3 + .5 * Math.exp(-(t - t0) / 1.3), color: 'accent', to: 12}],
+  guides: [[0,.3,12,.3]],
+  xticks: [[t0,'t₀'],[8.5,'t₁']], yticks: [[.3,'n']]
+});
+
+chart('c-nup', {
+  xmax: 1, ymax: .8, xlabel: 'k', ylabel: 'y', right: 96,
+  curves: [
+    {fn: x => s * f(x), color: 'green', label: 'sf(k)', dy: 10},
+    {fn: x => m * x, color: 'accent', label: '(n+δ)k', to: 1, dy: 6},
+    {fn: x => m2 * x, color: 'accent', dash: true, label: "(n'+δ)k", to: 0.75, lx: .75, dy: -4}
+  ],
+  guides: [[kStar,0,kStar,m*kStar],[kN,0,kN,m2*kN]],
+  points: [[kStar, m * kStar, 'C', 8, 18],[kN, m2 * kN, 'C′', -28, -6]],
+  arrows: [[kStar - .03,.03,kN + .03,.03]],
+  xticks: [[kN,"k*′"],[kStar,'k*']]
+});
+
+const A = [0.9, 1.05, 1.2], kA = A.map(a => Math.pow(s * a / m, 2));
+chart('c-tech', {
+  xmax: 1.05, ymax: 1.3, xlabel: 'k', ylabel: 'y', right: 90,
+  curves: [
+    {fn: x => A[0] * Math.sqrt(x), color: 'blue', label: 'f(k, A₀)', to: 1.05},
+    {fn: x => A[1] * Math.sqrt(x), color: 'blue', dash: true, label: 'f(k, A₁)', to: 1.05},
+    {fn: x => A[2] * Math.sqrt(x), color: 'blue', dash: true, label: 'f(k, A₂)', to: 1.05},
+    {fn: x => s * A[0] * Math.sqrt(x), color: 'green', to: 1.05},
+    {fn: x => s * A[1] * Math.sqrt(x), color: 'green', to: 1.05},
+    {fn: x => s * A[2] * Math.sqrt(x), color: 'green', label: 'sf(k)', to: 1.05, lx: .12, dy: -12},
+    {fn: x => m * x, color: 'accent', label: '(n+δ)k', to: 1.05, lx: .3, dy: 22}
+  ],
+  guides: kA.map(k => [k, 0, k, m * k]),
+  points: kA.map(k => [k, m * k]),
+  xticks: [[kA[0],'k*₀'],[kA[1],'k*₁'],[kA[2],'k*₂']]
+});
+
+const kg = Math.pow(0.45 / m, 2), sg = 0.5;   // f'(kg) = m
+chart('c-gold', {
+  xmax: 1.1, ymax: 1.1, xlabel: 'k', ylabel: 'y', right: 92,
+  curves: [
+    {fn: f, color: 'blue', label: 'f(k)', to: 1.1},
+    {fn: x => m * x, color: 'accent', label: '(n+δ)k', to: 1.1},
+    {fn: x => sg * f(x), color: 'green', label: 's_g f(k)', to: 1.1, dy: 12},
+    {fn: x => f(kg) + m * (x - kg), color: 'gray', dash: true, from: .35, to: 1.0}
+  ],
+  segs: [[kg, m * kg, kg, f(kg), '']],
+  guides: [[kg, 0, kg, m * kg]],
+  points: [[kg, f(kg)], [kg, m * kg, 'Q', 8, 18]],
+  texts: [[kg + .02, (f(kg) + m * kg) / 2, 'c_g*（最大）', 'start', 'lbl', 'fill:var(--accent)'],
+          [.33, f(kg) + m * (.35 - kg) + .02, '切線（斜率 = n+δ）', 'end', 'tick']],
+  xticks: [[kg, 'k_g*']]
+});
+// make the c_g* bracket visible
+document.querySelectorAll('#c-gold line:not(.axis):not(.guide):not([marker-end])').forEach(l => { if (!l.getAttribute('class')) { l.setAttribute('stroke', 'var(--accent)'); l.setAttribute('stroke-width', 4); } });
+
+// ---------- slide navigation ----------
+const slides = [...document.querySelectorAll('.slide')];
+const counter = document.getElementById('counter'), bar = document.getElementById('progress');
+let cur = 0;
+function show(i){
+  cur = Math.max(0, Math.min(slides.length - 1, i));
+  slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+  slides[cur].scrollTop = 0;
+  counter.textContent = (cur + 1) + ' / ' + slides.length;
+  bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+  if (location.hash !== '#' + (cur + 1)) history.replaceState(null, '', '#' + (cur + 1));
+}
+document.getElementById('prev').onclick = () => show(cur - 1);
+document.getElementById('next').onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','PageDown',' ','Enter'].includes(e.key)) { e.preventDefault(); show(cur + 1); }
+  else if (['ArrowLeft','PageUp','Backspace'].includes(e.key)) { e.preventDefault(); show(cur - 1); }
+  else if (e.key === 'Home') show(0);
+  else if (e.key === 'End') show(slides.length - 1);
+});
+let tx = null;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive: true});
+document.addEventListener('touchend', e => {
+  if (tx === null) return; const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 60) show(cur + (dx < 0 ? 1 : -1)); tx = null;
+});
+show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+</script>
+</body>
+</html>
